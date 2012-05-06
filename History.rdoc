@@ -1,6 +1,4 @@
-=== 1.0.0 / 2012-05-04
+== v0.0.1 [2012-04-06] Michael Granger <ged@FaerieMUD.org>
 
-* 1 major enhancement
-
-  * Birthday!
+First release.
 
