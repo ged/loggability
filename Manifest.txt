@@ -1,0 +1,16 @@
+ChangeLog
+History.rdoc
+Manifest.txt
+README.rdoc
+Rakefile
+bin/loggability
+lib/loggability.rb
+lib/loggability/constants.rb
+lib/loggability/exceptions.rb
+lib/loggability/formatter.rb
+lib/loggability/formatter/default.rb
+lib/loggability/formatter/html.rb
+lib/loggability/logger.rb
+spec/lib/helpers.rb
+spec/loggability/logger_spec.rb
+spec/loggability_spec.rb

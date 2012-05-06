@@ -1,0 +1,183 @@
+= loggability
+
+home   :: http://deveiate.org/projects/loggability
+code   :: http://bitbucket.org/ged/loggability
+docs   :: http://deveiate.org/code/loggability
+github :: http://github.com/ged/loggability
+
+
+== Description
+
+Loggability is a wrapper around the 'logger' standard library that makes
+it easier to use for large systems.
+
+
+== Prerequisites
+
+* Ruby 1.9.3 or better, Rubinius 2.0 or better
+
+It will probably work under any other interpreter in which Logger works, but
+it's only tested in the above.
+
+
+== Installation
+
+    $ gem install loggability
+
+
+== Usage
+
+Loggability is split up into two parts: {log hosts}[rdoc-ref:Loggability::LogHost]
+and {log clients}[rdoc-ref:Loggability::LogClient]. A <b>log
+host</b> is an object that contains a Logger instance that will be used to
+log stuff. A <b>log client</b> is an object that will write logging messages to a
+particular <b>log host</b>.
+
+Both parts require that you extend the object with Loggability.
+
+=== Setting Up A 'Log Host'
+
+To install a Logger into an object, you use the +log_as+ declaration with a
+Symbol that will be used as the key for the object's Logger:
+
+    module MyProject
+        extend Loggability
+        log_as :my_project
+    end
+
+After declaring itself as a log host, it will have an associated Loggability::Logger
+object that's a wrapper around a Logger instance:
+
+    MyProject.logger
+    # => #<Loggability::Logger:0x4e0c :my_project ...>
+
+You can call all the regular Logger methods:
+
+    MyProject.logger.level = Logger::WARN
+
+    MyProject.logger.debug("Created logger")
+    MyProject.logger.info("Program started")
+    MyProject.logger.warn("Nothing to do!")
+
+    begin
+        File.each_line(path) do |line|
+            unless line =~ /^(\w+) = (.*)$/
+                MyProject.logger.error("Line in wrong format: #{line}")
+            end
+        end
+    rescue => err
+        MyProject.logger.fatal("Caught exception; exiting")
+        MyProject.logger.fatal(err)
+    end
+
+or use a few new convenience methods for changing the logging level:
+
+    MyProject.logger.level = :debug
+
+...installing a different formatter:
+
+    MyProject.logger.format_as( :html )
+
+...changing the output destination:
+
+    log_messages = []
+    MyProject.logger.output_to( log_messages )
+
+...{and more}[rdoc-ref:Loggability::Logger].
+
+
+=== Setting Up A 'Log Client'
+
+To add an object that will log to your log host, after you <tt>extend Loggability</tt>,
+use the +log_to+ declaration to hook up the object (and instances of the object if
+you use +log_to+ in a Class) to the log host you specify:
+
+    class MyProject::Server
+        extend Loggability
+        log_to :my_project
+
+        def initialize( config={} )
+            self.log.debug "Creating a server with config: %p" % [ config ]
+            #...
+        end
+    end
+
+You can fetch any object's Logger through the Loggability object:
+
+    Loggability[ MyProject ]
+    # => #<Loggability::Logger:0x007f88ca3bf510 ...>
+
+    Loggability[ MyProject::Server ]
+    # => #<Loggability::Logger:0x007f88ca3bf510 ...>
+
+Calling the object's <tt>#log</tt> method will return a Proxy for its host's Logger object that will include the object's name in the log messages 'progname'.
+
+You can also use the <b>log host</b> itself as the argument to +log_to+:
+
+    class MyProject::Client
+        extend Loggability
+        log_to MyProject
+    end
+
+
+=== Aggregate Logging
+
+If you have several <b>log hosts</b>, and you want to affect them all simultaneously,
+you can do that using the aggregate functions of Loggability. They're the same as the
+methods on Loggability::Logger:
+
+    # Set all logs to log at INFO level
+    Loggability.level = :info
+    
+    # Write HTML logs
+    Loggability.format_with( :html )
+    
+    # Log everything to the same logfile
+    Loggability.output_to( "/tmp/my_project_log.html" )
+
+
+== Contributing
+
+You can check out the current development source with
+Mercurial[http://bitbucket.org/ged/loggability], or if you prefer Git, via
+{its Github mirror}[https://github.com/ged/loggability].
+
+After checking out the source, run:
+
+    $ rake newb
+
+This task will install any missing dependencies, run the tests/specs,
+and generate the API documentation.
+
+
+== License
+
+Copyright (c) 2012, Michael Granger
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+* Redistributions of source code must retain the above copyright notice,
+  this list of conditions and the following disclaimer.
+
+* Redistributions in binary form must reproduce the above copyright notice,
+  this list of conditions and the following disclaimer in the documentation
+  and/or other materials provided with the distribution.
+
+* Neither the name of the author/s, nor the names of the project's
+  contributors may be used to endorse or promote products derived from this
+  software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE
+FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+
