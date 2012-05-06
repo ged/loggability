@@ -8,8 +8,25 @@ github :: http://github.com/ged/loggability
 
 == Description
 
-Loggability is a wrapper around the 'logger' standard library that makes
-it easier to use for large systems.
+A composable logging system built on the standard Logger library.
+
+You can add Loggability to large libraries and systems, then hook everything
+up later when you know where you want logs to be written, at what level of
+severity, and in which format.
+
+An example:
+
+    # Load a bunch of libraries
+	require 'strelka'
+	require 'inversion'
+	require 'treequel'
+	require 'loggability'
+
+    # Now tell everything that's using Loggability to log to an HTML
+	# log file at INFO level
+	Loggability.write_to( '/usr/local/www/htdocs/log.html' )
+	Loggability.format_as( :html )
+	Loggability.level = :info
 
 
 == Prerequisites
@@ -31,7 +48,7 @@ Loggability is split up into two parts: {log hosts}[rdoc-ref:Loggability::LogHos
 and {log clients}[rdoc-ref:Loggability::LogClient]. A <b>log
 host</b> is an object that contains a Logger instance that will be used to
 log stuff. A <b>log client</b> is an object that will write logging messages to a
-particular <b>log host</b>.
+particular <b>log host</b>'s Logger.
 
 Both parts require that you extend the object with Loggability.
 
@@ -51,7 +68,7 @@ object that's a wrapper around a Logger instance:
     MyProject.logger
     # => #<Loggability::Logger:0x4e0c :my_project ...>
 
-You can call all the regular Logger methods:
+Since it's still a Logger object, you can call all the regular Logger methods:
 
     MyProject.logger.level = Logger::WARN
 
