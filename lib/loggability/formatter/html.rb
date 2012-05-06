@@ -44,7 +44,7 @@ class Loggability::Formatter::HTML < Loggability::Formatter
 	#########
 
 	### Format the specified +object+ for output to the log.
-	def msg2str( object )
+	def msg2str( object, severity )
 		case object
 		when String
 			return escape_html( object )

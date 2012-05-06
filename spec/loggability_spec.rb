@@ -61,5 +61,24 @@ describe Loggability do
 
 	end
 
+
+	context "aggregate methods" do
+
+		it "propagate some setting methods to every Logger" do
+			origin = Class.new do
+				extend Loggability
+				log_as :testing
+			end
+			Loggability.level = :warn
+			Loggability.output_to( $stdout )
+			Loggability.format_with( :color )
+
+			Loggability[ origin ].level.should == :warn
+			Loggability[ origin ].logdev.dev.should be( $stdout )
+			Loggability[ origin ].formatter.class.should == Loggability::Formatter::Color
+		end
+
+	end
+
 end
 

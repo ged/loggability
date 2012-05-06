@@ -11,6 +11,16 @@ BEGIN {
 	$LOAD_PATH.unshift( libdir.to_s ) unless $LOAD_PATH.include?( libdir.to_s )
 }
 
+# SimpleCov test coverage reporting; enable this using the :coverage rake task
+if ENV['COVERAGE']
+	$stderr.puts "\n\n>>> Enabling coverage report.\n\n"
+	require 'simplecov'
+	SimpleCov.start do
+		add_filter 'spec'
+	end
+end
+
+
 require 'loggability' unless defined?( Loggability )
 
 #
@@ -21,3 +31,12 @@ module Loggability::SpecHelpers
 	
 
 end # Loggability::SpecHelpers
+
+
+### Mock with RSpec
+RSpec.configure do |c|
+	c.mock_with( :rspec )
+
+	c.include( Loggability::SpecHelpers )
+end
+
