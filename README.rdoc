@@ -16,17 +16,33 @@ severity, and in which format.
 
 An example:
 
-    # Load a bunch of libraries
-	require 'strelka'
-	require 'inversion'
-	require 'treequel'
-	require 'loggability'
-
+    # Load a bunch of libraries that use Loggability
+    require 'strelka'
+    require 'inversion'
+    require 'treequel'
+    require 'loggability'
+    
+    # Set up our own library
+    module MyProject
+        extend Loggability
+        log_as :my_project
+    
+        class Server
+            extend Loggability
+            log_to :my_project
+    
+            def initialize
+                self.log.debug "Listening."
+            end
+        end
+    
+    end
+    
     # Now tell everything that's using Loggability to log to an HTML
-	# log file at INFO level
-	Loggability.write_to( '/usr/local/www/htdocs/log.html' )
-	Loggability.format_as( :html )
-	Loggability.level = :info
+    # log file at INFO level
+    Loggability.write_to( '/usr/local/www/htdocs/log.html' )
+    Loggability.format_as( :html )
+    Loggability.level = :info
 
 
 == Prerequisites
