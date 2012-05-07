@@ -1,4 +1,9 @@
-== v0.0.1 [2012-04-06] Michael Granger <ged@FaerieMUD.org>
+== v0.0.2 [2012-05-07] Michael Granger <ged@FaerieMUD.org>
+
+Fix escaping of the 'progname' in the HTML formatter.
+
+
+== v0.0.1 [2012-05-06] Michael Granger <ged@FaerieMUD.org>
 
 First release.
 

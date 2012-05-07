@@ -10,7 +10,7 @@ require 'date'
 module Loggability
 
 	# Package version constant
-	VERSION = '0.0.1'
+	VERSION = '0.0.2'
 
 	# VCS revision
 	REVISION = %q$Revision$
