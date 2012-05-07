@@ -19,8 +19,8 @@ describe Loggability::Formatter::HTML do
 	subject { described_class.new }
 
 	it "formats messages as HTML" do
-		subject.call( 'INFO', Time.at(1336286481), nil, "Foom." ).should =~
-			%r{<span class="log-message-text">Foom.</span>}i
+		subject.call( 'INFO', Time.at(1336286481), nil, "Foom." ).
+			should =~ %r{<span class="log-message-text">Foom.</span>}i
 	end
 
 	it "formats exceptions into useful messages" do
@@ -38,8 +38,15 @@ describe Loggability::Formatter::HTML do
 	end
 
 	it "formats regular objects into useful messages" do
-		subject.call( 'INFO', Time.at(1336286481), nil, Object.new ).should =~
-			%r{<span class=\"log-message-text\">#&lt;Object:0x\p{XDigit}+&gt;</span>}
+		subject.call( 'INFO', Time.at(1336286481), nil, Object.new ).
+			should =~ %r{<span class=\"log-message-text\">#&lt;Object:0x\p{XDigit}+&gt;</span>}
 	end
+
+	it "escapes the 'progname' part of log messages" do
+		progname = "#<Class:0x007f9efa153d08>:0x7f9efa153c18"
+		subject.call( 'DEBUG', Time.at(1336286481), progname, Object.new ).
+			should =~ %r{#&lt;Class:0x0}
+	end
+
 end
 

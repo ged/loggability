@@ -28,8 +28,6 @@ require 'loggability' unless defined?( Loggability )
 #
 module Loggability::SpecHelpers
 
-	
-
 end # Loggability::SpecHelpers
 
 

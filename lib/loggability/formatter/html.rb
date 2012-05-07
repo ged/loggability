@@ -39,6 +39,12 @@ class Loggability::Formatter::HTML < Loggability::Formatter
 	end
 
 
+	### Format the +message+; Overridden to escape the +progname+.
+	def call( severity, time, progname, message )
+		super( severity, time, escape_html(progname), message )
+	end
+
+
 	#########
 	protected
 	#########
@@ -66,6 +72,7 @@ class Loggability::Formatter::HTML < Loggability::Formatter
 
 	### Escape any HTML special characters in +string+.
 	def escape_html( string )
+		return string unless string.respond_to?( :gsub )
 		return string.
 			gsub( '&', '&amp;' ).
 			gsub( '<', '&lt;'  ).
