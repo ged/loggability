@@ -39,7 +39,7 @@ describe Loggability::Formatter::HTML do
 
 	it "formats regular objects into useful messages" do
 		subject.call( 'INFO', Time.at(1336286481), nil, Object.new ).
-			should =~ %r{<span class=\"log-message-text\">#&lt;Object:0x\p{XDigit}+&gt;</span>}
+			should =~ %r{<span class=\"log-message-text\">#&lt;Object:0x[[:xdigit:]]+&gt;</span>}
 	end
 
 	it "escapes the 'progname' part of log messages" do

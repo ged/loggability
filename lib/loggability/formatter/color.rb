@@ -16,11 +16,11 @@ class Loggability::Formatter::Color < Loggability::Formatter::Default
 
 	# ANSI color escapes keyed by severity
 	LEVEL_CODES = {
-		debug: "\e[1;30m", # bold black
-		info:  "\e[37m",   # white
-		warn:  "\e[1;33m", # bold yellow
-		error: "\e[31m",   # red
-		fatal: "\e[1;31m", # bold red
+		:debug => "\e[1;30m", # bold black
+		:info  =>  "\e[37m",   # white
+		:warn  =>  "\e[1;33m", # bold yellow
+		:error => "\e[31m",   # red
+		:fatal => "\e[1;31m", # bold red
 	}
 
 	# Pattern for matching color terminals

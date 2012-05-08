@@ -92,6 +92,10 @@ module Loggability
 	#
 	# Aggregate method: set the log level on all loggers to +newlevel+. See
 	# Loggability::Logger#level= for more info.
+	def self::level=( newlevel )
+		self.aggregate( :level=, newlevel )
+	end
+
 
 	##
 	# :method: output_to
@@ -101,6 +105,13 @@ module Loggability
 	#
 	# Aggregate method: set all loggers to log to +destination+. See Loggability::Logger#output_to
 	# for more info.
+	def self::output_to( newdevice )
+		self.aggregate( :output_to, newdevice )
+	end
+	class << self
+		alias_method :write_to, :output_to
+	end
+
 
 	##
 	# :method: format_with
@@ -111,9 +122,12 @@ module Loggability
 	#
 	# Aggregate method: set all loggers to log with the given +formatter+. See
 	# Loggability::Logger#format_with for more info.
-	AGGREGATE_METHODS.each do |meth|
-		block = self.method( :aggregate ).to_proc.curry[ meth ]
-		Loggability.singleton_class.send( :define_method, meth, &block )
+	def self::format_with( formatter )
+		self.aggregate( :format_with, formatter )
+	end
+	class << self
+		alias_method :format_as, :format_with
+		alias_method :formatter=, :format_with
 	end
 
 

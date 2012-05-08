@@ -119,7 +119,7 @@ class Loggability::Logger < ::Logger
 	### Create a new Logger wrapper that will output to the specified +logdev+.
 	def initialize( logdev=DEFAULT_DEVICE, *args )
 		super
-		self.level = ($DEBUG ? DEBUG : WARN)
+		self.level = if $DEBUG then :debug else :warn end
 		@default_formatter = Loggability::Formatter.create( :default )
 	end
 
@@ -142,7 +142,8 @@ class Loggability::Logger < ::Logger
 	### Set the logger level to +newlevel+, which can be a numeric level (e.g., Logger::DEBUG, etc.),
 	### or a symbolic level (e.g., :debug, :info, etc.)
 	def level=( newlevel )
-		newlevel = LOG_LEVELS[ newlevel.to_sym ] if newlevel.respond_to?( :to_sym )
+		newlevel = LOG_LEVELS[ newlevel.to_sym ] if
+			newlevel.respond_to?( :to_sym ) && LOG_LEVELS.key?( newlevel.to_sym )
 		super( newlevel )
 	end
 
@@ -161,7 +162,7 @@ class Loggability::Logger < ::Logger
 	### set up logging to any object that responds to #<<.
 	def output_to( target, *args )
 		if target.respond_to?( :write ) || target.is_a?( String )
-			opts = { shift_age: args.shift, shift_size: args.shift }
+			opts = { :shift_age => args.shift, :shift_size => args.shift }
 			self.logdev = Logger::LogDevice.new( target, opts )
 		elsif target.respond_to?( :<< )
 			self.logdev = AppendingLogDevice.new( target )
