@@ -7,7 +7,8 @@ require 'loggability/formatter' unless defined?( Loggability::Formatter )
 require 'loggability/formatter/default'
 
 
-# The default log formatter class.
+# ANSI color log formatter. Outputs log messages color-coded by their
+# severity if the current terminal appears to support it.
 class Loggability::Formatter::Color < Loggability::Formatter::Default
 
 	# ANSI reset
