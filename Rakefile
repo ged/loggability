@@ -28,7 +28,7 @@ hoespec = Hoe.spec 'loggability' do
 
 	self.spec_extras[:licenses] = ["Ruby"]
 	self.spec_extras[:rdoc_options] = ['-f', 'fivefish', '-t', 'Loggability Toolkit']
-	self.require_ruby_version( '>=1.9.3' )
+	self.require_ruby_version( '>=1.8.7' )
 	self.hg_sign_tags = true if self.respond_to?( :hg_sign_tags= )
 	self.check_history_on_release = true if self.respond_to?( :check_history_on_release= )
 

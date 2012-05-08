@@ -43,7 +43,7 @@ describe Loggability::Formatter do
 	it "formats regular objects into useful messages" do
 		formatter = Loggability::Formatter.new( '[%5$s] %7$s' )
 		formatter.call( 'INFO', Time.at(1336286481), nil, Object.new ).should =~
-			/\[INFO\] #<Object:0x\p{XDigit}+>/i
+			/\[INFO\] #<Object:0x[[:xdigit:]]+>/i
 	end
 
 end
