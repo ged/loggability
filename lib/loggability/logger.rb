@@ -33,6 +33,15 @@ class Loggability::Logger < ::Logger
 			@target = target
 		end
 
+
+		######
+		public
+		######
+
+		# The target of the log device
+		attr_reader :target
+
+
 		### Append the specified +message+ to the target.
 		def write( message )
 			@target << message
@@ -127,6 +136,24 @@ class Loggability::Logger < ::Logger
 	######
 	public
 	######
+
+	### Return a human-readable representation of the object suitable for debugging.
+	def inspect
+		dev = if self.logdev.respond_to?( :dev )
+				self.logdev.dev.class
+			else
+				self.logdev.target.class
+			end
+
+		return "#<%p:%#x severity: %s, formatter: %s, outputting to: %p>" % [
+			self.class,
+			self.object_id * 2,
+			self.level,
+			self.formatter.class.name.sub( /.*::/, '' ).downcase,
+			dev,
+		]
+	end
+
 
 	#
 	# :section: Severity Level
