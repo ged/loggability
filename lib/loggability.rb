@@ -9,7 +9,7 @@ require 'date'
 module Loggability
 
 	# Package version constant
-	VERSION = '0.1.0'
+	VERSION = '0.2.0'
 
 	# VCS revision
 	REVISION = %q$Revision$
@@ -33,13 +33,13 @@ module Loggability
 	LOGSPEC_PATTERN = %r{
 		^
 			\s*
-			(?<severity>(?i:debug|info|warn|error|fatal))   # severity
+			((?i:debug|info|warn|error|fatal))   # severity
 		    (?:
 				\s+
-				(?<target>(?:[\w\-/:\.]|\\[ ])+)
+				((?:[\w\-/:\.]|\\[ ])+)
 			)?
 			(?: \s+\(
-				(?<format>\w+)
+				(\w+)
 			\) )?
 			\s*
 		$
