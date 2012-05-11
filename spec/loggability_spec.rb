@@ -146,6 +146,28 @@ describe Loggability do
 			Loggability[ class2 ].logdev.dev.path.should == 'spec-error.log'
 		end
 
+		it "can configure loghosts with a Configurability::Config object" do
+			class1 = Class.new { extend Loggability; log_as :class1 }
+			class2 = Class.new { extend Loggability; log_as :class2 }
+
+			configsource = (<<-"END_CONFIG").gsub( /^\t{3}/, '' )
+			---
+			logging:
+			  class1: debug (html)
+			  class2: error spec-error.log
+
+			END_CONFIG
+
+			config = Configurability::Config.new( configsource )
+			config.install
+
+			Loggability[ class1 ].level.should == :debug
+			Loggability[ class1 ].formatter.should be_a( Loggability::Formatter::HTML )
+			Loggability[ class2 ].level.should == :error
+			Loggability[ class2 ].logdev.dev.should be_a( File )
+			Loggability[ class2 ].logdev.dev.path.should == 'spec-error.log'
+		end
+
 		it "can configure all loghosts with a config key of __default__" do
 			Loggability.configure( '__default__' => 'debug STDERR (html)' )
 
