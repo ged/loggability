@@ -322,7 +322,7 @@ module Loggability
 	def self::parse_config_spec( spec )
 		match = LOGSPEC_PATTERN.match( spec ) or
 			raise ArgumentError, "Couldn't parse logspec: %p" % [ spec ]
-		self.log.error "  parsed config spec %p -> %p" % [ spec, match ]
+		self.log.debug "  parsed config spec %p -> %p" % [ spec, match ]
 		severity, target, format = match.captures
 
 		target = case target
