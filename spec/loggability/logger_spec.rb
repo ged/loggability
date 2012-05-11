@@ -31,6 +31,10 @@ describe Loggability::Logger do
 	end
 
 
+	it "has a less-verbose inspection format than that of its parent" do
+		@logger.inspect.should =~ /severity: \S+ formatter: \S+ outputting to: \S+/
+	end
+
 	describe "severity level API" do
 
 		it "defaults to :warn level" do
@@ -143,6 +147,12 @@ describe Loggability::Logger do
 			proxy.fatal( "A fatal message." )
 
 			messages.first.should =~ /DEBUG \{Object:0x[[:xdigit:]]+\} -- A debug message.\n/
+		end
+
+		it "has a terse inspection format" do
+			object = Object.new
+			@logger.proxy_for( object ).inspect.
+				should =~ /ObjectNameProxy.* for Object/
 		end
 
 	end

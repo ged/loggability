@@ -21,10 +21,11 @@ hoespec = Hoe.spec 'loggability' do
 
 	self.developer 'Michael Granger', 'ged@FaerieMUD.org'
 
-	self.dependency 'pluginfactory', '~> 1.0'
+	self.dependency 'pluginfactory',   '~> 1.0'
 
-	self.dependency 'hoe-deveiate',  '~> 0.1', :developer
-	self.dependency 'simplecov',     '~> 0.6', :developer
+	self.dependency 'hoe-deveiate',    '~> 0.1', :developer
+	self.dependency 'simplecov',       '~> 0.6', :developer
+	self.dependency 'configurability', '~> 1.2', :developer
 
 	self.spec_extras[:licenses] = ["Ruby"]
 	self.spec_extras[:rdoc_options] = ['-f', 'fivefish', '-t', 'Loggability Toolkit']
