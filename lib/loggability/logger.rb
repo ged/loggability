@@ -114,7 +114,7 @@ class Loggability::Logger < ::Logger
 		### Make a progname for the specified object.
 		def make_progname( object )
 			case object
-			when Class
+			when Class, Module
 				object.inspect
 			else
 				"%p:%#x" % [ object.class, object.object_id * 2 ]

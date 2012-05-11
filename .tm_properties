@@ -1,0 +1,8 @@
+# Settings
+projectDirectory     = "$CWD"
+windowTitle          = "${CWD/^.*\///} «$TM_DISPLAYNAME»"
+excludeInFileChooser = "{$exclude,.hg,pkg}"
+
+[ source.ruby ]
+disableIndentCorrections = true
+
