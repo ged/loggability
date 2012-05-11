@@ -22,11 +22,7 @@ module Loggability
 
 	# Configuration defaults
 	CONFIG_DEFAULTS = {
-		:defaults => {
-			:severity  => 'warn',
-			:formatter => 'default',
-			:output    => 'STDERR',
-		},
+		:__default__ => 'warn STDERR',
 	}
 
 	# Regexp for parsing logspec lines in the config
@@ -293,9 +289,10 @@ module Loggability
 	def self::configure( config=nil )
 		if config
 			self.log.debug "Configuring Loggability with custom config."
+			confighash = config.to_hash
 
 			# Set up all loggers with defaults first
-			if defaultspec = config.delete( :__default__ ) || config.delete( '__default__' )
+			if defaultspec = confighash.delete( :__default__ ) || confighash.delete( '__default__' )
 				level, format, target = self.parse_config_spec( defaultspec )
 				Loggability.level = level if level
 				Loggability.format_as( format ) if format
@@ -303,7 +300,7 @@ module Loggability
 			end
 
 			# Then let individual configs override.
-			config.each do |key, logspec|
+			confighash.each do |key, logspec|
 				unless Loggability.log_host?( key )
 					self.log.debug "  no such log host %p; skipping" % [ key ]
 					next
