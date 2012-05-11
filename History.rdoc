@@ -1,3 +1,9 @@
+== v0.2.2 [2012-05-11] Michael Granger <ged@FaerieMUD.org>
+
+- Fix too-severe log messages while parsing config specs.
+- Proxy Modules like Classes (i.e., with its name and no object_id).
+
+
 == v0.2.1 [2012-05-10] Michael Granger <ged@FaerieMUD.org>
 
 Bugfix for configuration via a Configurability::Config object.
