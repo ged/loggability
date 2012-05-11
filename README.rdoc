@@ -45,6 +45,43 @@ An example:
     Loggability.level = :info
 
 
+=== Configurability
+
+Loggability has support for the Configurability[https://rubygems.org/gems/configurability]
+library, which does the same thing for configuration that Loggability does for
+logging.
+
+You can configure all registered loggers from the 'logging' section of the config:
+
+    logging:
+	  __default__: warn STDERR
+	  mongrel2: info STDOUT (html)
+	  strelka: debug (html)
+	  inversion: error /var/log/templating.log (default)
+
+The format of the value of each logger is:
+
+    SEVERITY [TARGET] [(FORMAT)]
+
+where:
+
+[+SEVERITY+]
+  The log level; one of: +debug+, +info+, +warn+, +error+, or +fatal+
+[+TARGET+]
+  The destination for log messages. This can be the path to a log file, or
+  one of <tt>'STDOUT'</tt> or <tt>'STDERR'</tt>, which get mapped to the
+  equivalent filehandle. Optional.
+[+FORMAT+]
+  The name of one of the formatters. Loggability comes with +default+ (plaintext),
+  +color+ (ANSI colored text), and +html+ formatters.
+
+If the special key <tt>__default__</tt> is included, its config will be used to set
+global defaults before the individual configs are applied.
+
+If either of the optional values is unspecified, it is left unchanged from what it
+was before configuration.
+
+
 == Prerequisites
 
 * Ruby 1.9.3 or better, Rubinius 2.0 or better

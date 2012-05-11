@@ -5,7 +5,6 @@
 require 'logger'
 require 'date'
 
-
 # A mixin that provides a top-level logging subsystem based on Logger.
 module Loggability
 
@@ -21,6 +20,30 @@ module Loggability
 	# The methods that are delegated across all loggers
 	AGGREGATE_METHODS = [ :level=, :output_to, :write_to, :format_with, :format_as, :formatter= ]
 
+	# Configuration defaults
+	CONFIG_DEFAULTS = {
+		:defaults => {
+			:severity  => 'warn',
+			:formatter => 'default',
+			:output    => 'STDERR',
+		},
+	}
+
+	# Regexp for parsing logspec lines in the config
+	LOGSPEC_PATTERN = %r{
+		^
+			\s*
+			(?<severity>(?i:debug|info|warn|error|fatal))   # severity
+		    (?:
+				\s+
+				(?<target>(?:[\w\-/:\.]|\\[ ])+)
+			)?
+			(?: \s+\(
+				(?<format>\w+)
+			\) )?
+			\s*
+		$
+	}x
 
 	require 'loggability/constants'
 	include Loggability::Constants
@@ -56,9 +79,26 @@ module Loggability
 	end
 
 
+	### Return the log host key for +object+, using its #log_host_key method
+	### if it has one, or returning it as a Symbol if it responds to #to_sym. Returns
+	### +nil+ if no key could be derived.
+	def self::log_host_key_for( object )
+		return object.log_host_key if object.respond_to?( :log_host_key )
+		return object.to_sym if object.respond_to?( :to_sym )
+		return nil
+	end
+
+
+	### Returns +true+ if there is a log host associated with the given +object+.
+	def self::log_host?( object )
+		key = self.log_host_key_for( object ) or return false
+		return self.log_hosts.key?( key )
+	end
+
+
 	### Return the Loggability::Logger for the loghost associated with +logclient+.
 	def self::[]( logclient )
-		key = logclient.log_host_key if logclient.respond_to?( :log_host_key )
+		key = self.log_host_key_for( logclient )
 		key ||= GLOBAL_KEY
 
 		return self.log_hosts[ key ].logger
@@ -79,7 +119,10 @@ module Loggability
 	### Call the method with the given +methodname+ across the loggers of all loghosts with
 	### the given +arg+ and/or +block+.
 	def self::aggregate( methodname, arg, &block )
+		# self.log.debug "Aggregating a call to %p with %p to %d log hosts" %
+		#	[ methodname, arg, Loggability.log_hosts.length ]
 		Loggability.log_hosts.values.each do |loghost|
+			# self.log.debug "  %p.logger.%s( %p )" % [ loghost, methodname, arg ]
 			loghost.logger.send( methodname, arg, &block )
 		end
 	end
@@ -221,17 +264,80 @@ module Loggability
 	### either the +key+ the host registered with, or the log host object itself. Log messages
 	### can be written to the loghost via the LogClient API, which is automatically included.
 	def log_to( loghost )
-		self.extend( Loggability::LogClient )
-		self.log_host_key = if loghost.respond_to?( :log_host_key )
-				loghost.log_host_key
-			else
-				loghost.to_sym
-			end
-
-		# For objects that also can be instantiated
+		extend( Loggability::LogClient )
 		include( Loggability::LogClient::InstanceMethods ) if self.is_a?( Class )
+
+		self.log_host_key = Loggability.log_host_key_for( loghost )
 	end
 
 
-end # module Strelka
+	#
+	# :section: Configurability Support
+	#
+
+	# Load the Configurability library if it's installed
+	begin
+		require 'configurability'
+	rescue LoadError
+	end
+
+
+	# Configurability support -- load Loggability configuration from the 'logging' section
+	# of the config.
+	if defined?( Configurability )
+		extend Configurability
+		config_key :logging if respond_to?( :config_key )
+	end
+
+	### Configurability API -- configure logging.
+	def self::configure( config=nil )
+		if config
+			self.log.debug "Configuring Loggability with custom config."
+
+			# Set up all loggers with defaults first
+			if defaultspec = config.delete( :__default__ ) || config.delete( '__default__' )
+				level, format, target = self.parse_config_spec( defaultspec )
+				Loggability.level = level if level
+				Loggability.format_as( format ) if format
+				Loggability.output_to( target ) if target
+			end
+
+			# Then let individual configs override.
+			config.each do |key, logspec|
+				unless Loggability.log_host?( key )
+					self.log.debug "  no such log host %p; skipping" % [ key ]
+					next
+				end
+
+				self.log.debug "  configuring logger for %p: %s" % [ key, logspec ]
+				level, format, target = self.parse_config_spec( logspec )
+				Loggability[ key ].level = level if level
+				Loggability[ key ].format_with( format ) if format
+				Loggability[ key ].output_to( target ) if target
+			end
+		else
+			self.log.debug "Configuring Loggability with defaults."
+		end
+	end
+
+
+	### Parse the specified +spec+ into level,
+	def self::parse_config_spec( spec )
+		match = LOGSPEC_PATTERN.match( spec ) or
+			raise ArgumentError, "Couldn't parse logspec: %p" % [ spec ]
+		self.log.error "  parsed config spec %p -> %p" % [ spec, match ]
+		severity, target, format = match.captures
+
+		target = case target
+			when 'STDOUT' then $stdout
+			when 'STDERR' then $stderr
+			else
+				target
+			end
+
+		return severity, format, target
+	end
+
+
+end # module Loggability
 

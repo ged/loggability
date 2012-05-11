@@ -13,11 +13,18 @@ require 'loggability/logger'
 
 describe Loggability do
 
+	before( :each ) do
+		setup_logging( :fatal )
+	end
+
+	after( :each ) do
+		reset_logging()
+	end
+
 	it "is itself a log host for the global logger" do
 		described_class.logger.should be_a( Loggability::Logger )
 		described_class.log_hosts.should include( Loggability::GLOBAL_KEY => Loggability )
 	end
-
 
 	describe "version methods" do
 		it "returns a version string if asked" do
@@ -46,6 +53,8 @@ describe Loggability do
 			Loggability.log_hosts.should include( :testing => @class )
 			@class.logger.should be_a( Loggability::Logger )
 			@class.default_logger.should be( @class.logger )
+			Loggability[ @class ].should be( @class.logger )
+			Loggability[ :testing ].should be( @class.logger )
 		end
 
 		it "allows it to designate itself as a logging client" do
@@ -55,8 +64,12 @@ describe Loggability do
 			end
 			@class.log_to( :testing )
 			@class.log.logger.should be( origin.logger )
+			Loggability[ @class ].should be( origin.logger )
 
-			@class.new.log.logger.should be( origin.logger )
+			obj = @class.new
+
+			obj.log.logger.should be( origin.logger )
+			Loggability[ obj ].should be( origin.logger )
 		end
 
 	end
@@ -76,6 +89,88 @@ describe Loggability do
 			Loggability[ origin ].level.should == :warn
 			Loggability[ origin ].logdev.dev.should be( $stdout )
 			Loggability[ origin ].formatter.class.should == Loggability::Formatter::Color
+		end
+
+	end
+
+
+	describe "Configurability support" do
+
+		after( :each ) do
+			File.delete( 'spec-error.log' ) if File.exist?( 'spec-error.log' )
+		end
+
+		it "can parse a logging config spec with just a severity" do
+			Loggability.parse_config_spec( 'debug' ).should == [ 'debug', nil, nil ]
+		end
+
+		it "can parse a logging config spec with a severity and STDERR" do
+			Loggability.parse_config_spec( 'fatal STDERR' ).should == [ 'fatal', nil, $stderr ]
+		end
+
+		it "can parse a logging config spec with a severity and STDOUT" do
+			Loggability.parse_config_spec( 'error STDOUT' ).should == [ 'error', nil, $stdout ]
+		end
+
+		it "can parse a logging config spec with a severity and a path" do
+			Loggability.parse_config_spec( 'debug /var/log/debug.log' ).
+				should == [ 'debug', nil, '/var/log/debug.log' ]
+		end
+
+		it "can parse a logging config spec with a severity and a path with escaped spaces" do
+			Loggability.parse_config_spec( 'debug /store/media/Stormcrow\\ and\\ Raven/dl.log' ).
+				should == [ 'debug', nil, '/store/media/Stormcrow\\ and\\ Raven/dl.log' ]
+		end
+
+		it "can parse a logging config spec with a severity and a formatter" do
+			Loggability.parse_config_spec( 'warn (html)' ).
+				should == [ 'warn', 'html', nil ]
+		end
+
+		it "can parse a logging config spec with a severity, a path, and a formatter" do
+			Loggability.parse_config_spec( 'info /usr/local/www/htdocs/log.html (html)' ).
+				should == [ 'info', 'html', '/usr/local/www/htdocs/log.html' ]
+		end
+
+		it "can configure loghosts via its ::configure method" do
+			class1 = Class.new { extend Loggability; log_as :class1 }
+			class2 = Class.new { extend Loggability; log_as :class2 }
+
+			config = {'class1' => 'debug (html)', 'class2' => 'error spec-error.log'}
+			Loggability.configure( config )
+
+			Loggability[ class1 ].level.should == :debug
+			Loggability[ class1 ].formatter.should be_a( Loggability::Formatter::HTML )
+			Loggability[ class2 ].level.should == :error
+			Loggability[ class2 ].logdev.dev.should be_a( File )
+			Loggability[ class2 ].logdev.dev.path.should == 'spec-error.log'
+		end
+
+		it "can configure all loghosts with a config key of __default__" do
+			Loggability.configure( '__default__' => 'debug STDERR (html)' )
+
+			all_loggers = Loggability.log_hosts.values.map( &:logger )
+			all_loggers.all? {|lh| lh.level == :debug }.should be_true()
+			all_loggers.all? {|lh| lh.formatter.class == Loggability::Formatter::HTML }.should be_true()
+			all_loggers.all? {|lh| lh.logdev.dev.should == $stderr }.should be_true()
+		end
+
+		it "raises an error if configured with a logspec with an invalid severity" do
+			expect {
+				Loggability.configure( 'class1' => 'awesome /var/log/awesome.log' )
+			}.to raise_error( ArgumentError, /couldn't parse/i )
+		end
+
+		it "raises an error if configured with a logspec with an malformed filename" do
+			expect {
+				Loggability.configure( 'class1' => 'info Kitchen!!' )
+			}.to raise_error( ArgumentError, /couldn't parse/i )
+		end
+
+		it "raises an error if configured with a bogus formatter" do
+			expect {
+				Loggability.configure( 'class1' => 'debug (mindwaves)' )
+			}.to raise_error( FactoryError, /couldn't find a formatter/i )
 		end
 
 	end
