@@ -233,6 +233,17 @@ module Loggability
 			@__log ||= Loggability[ self ].proxy_for( self )
 		end
 
+
+		### Inheritance hook -- set the log host key of subclasses to the same
+		### thing as the extended class.
+		def inherited( subclass )
+			super
+			Loggability.log.debug "Setting up subclass %p of %p to log to %p" %
+				[ subclass, self, self.log_host_key ]
+			subclass.log_host_key = self.log_host_key
+		end
+
+
 		# Stuff that gets added to instances of Classes that are log hosts.
 		module InstanceMethods
 

@@ -72,6 +72,18 @@ describe Loggability do
 			Loggability[ obj ].should be( origin.logger )
 		end
 
+		it "propagates its log host key to subclasses" do
+			origin = Class.new do
+				extend Loggability
+				log_as :testing
+			end
+			@class.log_to( :testing )
+			subclass = Class.new( @class )
+
+			subclass.log.logger.should be( origin.logger )
+			Loggability[ subclass ].should be( origin.logger )
+		end
+
 	end
 
 
