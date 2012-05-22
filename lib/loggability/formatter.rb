@@ -59,7 +59,7 @@ class Loggability::Formatter
 			time.usec,                                                    # %2$d
 			Process.pid,                                                  # %3$d
 			Thread.current == Thread.main ? 'main' : Thread.object_id,    # %4$s
-			severity,                                                     # %5$s
+			severity.downcase,                                            # %5$s
 			progname,                                                     # %6$s
 			self.msg2str(message, severity)                               # %7$s
 		]
