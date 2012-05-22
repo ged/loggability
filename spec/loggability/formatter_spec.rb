@@ -24,7 +24,7 @@ describe Loggability::Formatter do
 	it "formats messages with the pattern it's constructed with" do
 		formatter = Loggability::Formatter.new( '[%5$s] %7$s' )
 		formatter.call( 'INFO', Time.at(1336286481), nil, 'Foom.' ).should =~
-			/\[INFO\] Foom./
+			/\[INFO\] Foom./i
 	end
 
 	it "formats exceptions into useful messages" do

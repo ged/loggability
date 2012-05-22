@@ -146,7 +146,7 @@ describe Loggability::Logger do
 			proxy.error( "An error message." )
 			proxy.fatal( "A fatal message." )
 
-			messages.first.should =~ /DEBUG \{Object:0x[[:xdigit:]]+\} -- A debug message.\n/
+			messages.first.should =~ /DEBUG \{Object:0x[[:xdigit:]]+\} -- A debug message.\n/i
 		end
 
 		it "has a terse inspection format" do
