@@ -11,6 +11,7 @@ lib/loggability/formatter/color.rb
 lib/loggability/formatter/default.rb
 lib/loggability/formatter/html.rb
 lib/loggability/logger.rb
+lib/loggability/spechelpers.rb
 spec/lib/helpers.rb
 spec/loggability/formatter/color_spec.rb
 spec/loggability/formatter/html_spec.rb
