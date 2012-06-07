@@ -1,3 +1,14 @@
+== v0.4.0 [2012-05-26] Michael Granger <ged@FaerieMUD.org>
+
+- Add some conversion-convenience code. You can now assign ::Logger
+  instances to LogHosts, use ::Logger::Formatter, and construct
+  Loggability::Logger instances with any device supported by
+  #output_to.
+  
+  Also adds a Loggability::Logger() casting method for easy logger
+  creation.
+
+
 == v0.3.0 [2012-05-26] Michael Granger <ged@FaerieMUD.org>
 
 - Add Loggability::SpecHelpers for setting up logging in tests.
