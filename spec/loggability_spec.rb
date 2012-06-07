@@ -26,6 +26,7 @@ describe Loggability do
 		described_class.log_hosts.should include( Loggability::GLOBAL_KEY => Loggability )
 	end
 
+
 	describe "version methods" do
 		it "returns a version string if asked" do
 			described_class.version_string.should =~ /\w+ [\d.]+/
@@ -82,6 +83,17 @@ describe Loggability do
 
 			subclass.log.logger.should be( origin.logger )
 			Loggability[ subclass ].should be( origin.logger )
+		end
+
+		it "wraps Logger instances assigned as its logger in a Loggability::Logger" do
+			@class.log_as( :testing )
+
+			logger = ::Logger.new( $stderr )
+
+			@class.logger = logger
+			@class.logger.should be_a( Loggability::Logger )
+
+			@class.log.debug "This shouldn't raise."
 		end
 
 	end

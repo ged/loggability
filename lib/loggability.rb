@@ -61,6 +61,15 @@ module Loggability
 	end
 
 
+	### Cast the given +device+ to a Loggability::Logger, if possible, and return it. If
+	### it can't be converted, raises a ArgumentError.
+	def self::Logger( device )
+		return device if device.is_a?( Loggability::Logger )
+		return Loggability::Logger.from_std_logger( device ) if device.is_a?( ::Logger )
+		return Loggability::Logger.new( device )
+	end
+
+
 	### Register the specified +host+ as a log host. It should already have been extended
 	### with LogHostMethods.
 	def self::register_loghost( host )
@@ -188,12 +197,19 @@ module Loggability
 		attr_accessor :default_logger
 
 		# The logger that's currently in effect
-		attr_accessor :logger
+		attr_reader :logger
 		alias_method :log, :logger
-		alias_method :log=, :logger=
 
 		# The key associated with the logger for this host
 		attr_accessor :log_host_key
+
+
+		### Set the logger associated with the LogHost to +newlogger+. If +newlogger+ isn't a
+		### Loggability::Logger, it will be converted to one.
+		def logger=( newlogger )
+			@logger = Loggability::Logger( newlogger )
+		end
+		alias_method :log=, :logger=
 
 	end # module LogHost
 

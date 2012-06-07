@@ -35,6 +35,17 @@ describe Loggability::Logger do
 		@logger.inspect.should =~ /severity: \S+ formatter: \S+ outputting to: \S+/
 	end
 
+
+	it "provides an upgrade constructor for regular Logger objects" do
+		logger = ::Logger.new( $stderr )
+		newlogger = described_class.from_std_logger( logger )
+		newlogger.should be_a( Loggability::Logger )
+		newlogger.logdev.dev.should be( logger.instance_variable_get(:@logdev).dev )
+		Loggability::LOG_LEVELS[ newlogger.level ].should == logger.level
+		newlogger.formatter.should be_a( Loggability::Formatter::Default )
+	end
+
+
 	describe "severity level API" do
 
 		it "defaults to :warn level" do
@@ -126,6 +137,15 @@ describe Loggability::Logger do
 		it "can be told to use the HTML formatter" do
 			@logger.format_as( :html )
 			@logger.formatter.should be_a( Loggability::Formatter::HTML )
+		end
+
+		it "supports formatting with ::Logger::Formatter, too" do
+			output = []
+			@logger.output_to( output )
+			@logger.level = :debug
+			@logger.formatter = ::Logger::Formatter.new
+			@logger.debug "This should work."
+			output.first.should =~ /D, \[\d{4}-\d\d-\d\dT\d\d:\d\d:\d\d.\d+ #\d+\] DEBUG -- : This should work.\n/
 		end
 
 	end

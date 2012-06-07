@@ -125,10 +125,31 @@ class Loggability::Logger < ::Logger
 	end # class ObjectNameProxy
 
 
+	### Return an equivalent Loggability::Logger object for the given +logger+.
+	def self::from_std_logger( logger )
+		device = logger.instance_variable_get( :@logdev ) or
+			raise ArgumentError, "%p doesn't appear to be a Logger (no @logdev)" % [ logger ]
+
+		newlogger = self.new( device.dev )
+
+		newlogger.level     = logger.level
+		newlogger.formatter = logger.formatter
+
+		return newlogger
+	end
+
+
+	#################################################################
+	###	I N S T A N C E   M E T H O D S
+	#################################################################
+
 	### Create a new Logger wrapper that will output to the specified +logdev+.
 	def initialize( logdev=DEFAULT_DEVICE, *args )
-		super
+		super( nil )
+
 		self.level = if $DEBUG then :debug else :warn end
+		self.output_to( logdev, *args )
+
 		@default_formatter = Loggability::Formatter.create( :default )
 	end
 
@@ -189,7 +210,7 @@ class Loggability::Logger < ::Logger
 	### set up logging to any object that responds to #<<.
 	def output_to( target, *args )
 		if target.respond_to?( :write ) || target.is_a?( String )
-			opts = { :shift_age => args.shift, :shift_size => args.shift }
+			opts = { :shift_age => args.shift || 0, :shift_size => args.shift || 1048576 }
 			self.logdev = Logger::LogDevice.new( target, opts )
 		elsif target.respond_to?( :<< )
 			self.logdev = AppendingLogDevice.new( target )
