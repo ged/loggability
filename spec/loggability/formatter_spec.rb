@@ -16,11 +16,6 @@ require 'loggability/formatter/default'
 
 describe Loggability::Formatter do
 
-	it "loads plugins out of loggability/formatter" do
-		Loggability::Formatter.derivative_dirs.should == ['loggability/formatter']
-	end
-
-
 	it "formats messages with the pattern it's constructed with" do
 		formatter = Loggability::Formatter.new( '[%5$s] %7$s' )
 		formatter.call( 'INFO', Time.at(1336286481), nil, 'Foom.' ).should =~

@@ -216,7 +216,7 @@ describe Loggability do
 		it "raises an error if configured with a bogus formatter" do
 			expect {
 				Loggability.configure( 'class1' => 'debug (mindwaves)' )
-			}.to raise_error( FactoryError, /couldn't find a formatter/i )
+			}.to raise_error( LoadError, /cannot load such file/i )
 		end
 
 	end
