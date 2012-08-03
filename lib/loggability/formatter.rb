@@ -2,24 +2,45 @@
 # vim: set nosta noet ts=4 sw=4:
 # encoding: utf-8
 
-require 'pluginfactory'
-
 require 'loggability' unless defined?( Loggability )
 
 
 ### An abstract base class for Loggability log formatters.
 class Loggability::Formatter
-	extend PluginFactory
 
 	# The default sprintf pattern
 	DEFAULT_DATETIME_FORMAT = '%Y-%m-%d %H:%M:%S'
 
 
-	### PluginFactory API -- return the Array of paths prefixes to use when searching
-	### formatter plugins.
-	def self::derivative_dirs
-		return ['loggability/formatter']
+	##
+	# Derivative classes, keyed by name
+	class << self; attr_reader :derivatives; end
+	@derivatives = {}
+
+
+	### Inherited hook -- add subclasses to the ::derivatives Array.
+	def self::inherited( subclass )
+		super
+		classname = subclass.name.sub( /.*::/, '' ).downcase.to_sym
+		Loggability::Formatter.derivatives[ classname ] = subclass
 	end
+
+
+	### Create a formatter of the specified +type+, loading it if it hasn't already been
+	### loaded.
+	def self::create( type, *args )
+		require "loggability/formatter/#{type}"
+		type = type.to_sym
+
+		if self.derivatives.key?( type )
+			return self.derivatives[ type ].new( *args )
+		else
+			raise LoadError,
+				"require of %s formatter succeeded (%p), but it didn't load a class named %p::%s" %
+				[ type, self.derivatives, self, type.to_s.capitalize ]
+		end
+	end
+
 
 
 	### Initialize a new Loggability::Formatter. The specified +logformat+ should
