@@ -3,7 +3,6 @@ History.rdoc
 Manifest.txt
 README.rdoc
 Rakefile
-bin/loggability
 lib/loggability.rb
 lib/loggability/constants.rb
 lib/loggability/formatter.rb
