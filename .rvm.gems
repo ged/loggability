@@ -1,5 +1,5 @@
 # .gems generated gem export file. Note that any env variable settings will be missing. Append these after using a ';' field separator
-hoe-deveiate -v0.1.1
-configurability -v1.2.0
-rdoc -v3.12
-simplecov -v0.6.2
+hoe-deveiate -v0.2.0
+configurability -v2.0.0
+rdoc -v4.0.0
+simplecov -v0.7.1

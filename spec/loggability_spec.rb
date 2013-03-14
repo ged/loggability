@@ -38,10 +38,13 @@ describe Loggability do
 	end
 
 
-	context "installed in a class" do
+	context "installed in a class as a log host" do
 
 		before( :each ) do
-			@class = Class.new { extend Loggability }
+			@class = Class.new do
+				extend Loggability
+				log_as :testing
+			end
 		end
 
 		after( :each ) do
@@ -49,45 +52,31 @@ describe Loggability do
 		end
 
 
-		it "allows it to be designated as a log host" do
-			@class.log_as( :testing )
+		it "is included in the list of log hosts" do
 			Loggability.log_hosts.should include( :testing => @class )
+		end
+
+		it "has an associated Loggability::Logger" do
 			@class.logger.should be_a( Loggability::Logger )
+		end
+
+		it "has an associated default Loggability::Logger" do
 			@class.default_logger.should be( @class.logger )
+		end
+
+		it "registers itself with the Loggability module" do
 			Loggability[ @class ].should be( @class.logger )
+		end
+
+		it "registers its key with the Loggability module" do
 			Loggability[ :testing ].should be( @class.logger )
 		end
 
-		it "allows it to designate itself as a logging client" do
-			origin = Class.new do
-				extend Loggability
-				log_as :testing
-			end
-			@class.log_to( :testing )
-			@class.log.logger.should be( origin.logger )
-			Loggability[ @class ].should be( origin.logger )
-
-			obj = @class.new
-
-			obj.log.logger.should be( origin.logger )
-			Loggability[ obj ].should be( origin.logger )
-		end
-
-		it "propagates its log host key to subclasses" do
-			origin = Class.new do
-				extend Loggability
-				log_as :testing
-			end
-			@class.log_to( :testing )
-			subclass = Class.new( @class )
-
-			subclass.log.logger.should be( origin.logger )
-			Loggability[ subclass ].should be( origin.logger )
+		it "has a proxy for its logger in its instances" do
+			@class.new.log.logger.should be( @class.logger )
 		end
 
 		it "wraps Logger instances assigned as its logger in a Loggability::Logger" do
-			@class.log_as( :testing )
-
 			logger = ::Logger.new( $stderr )
 
 			@class.logger = logger
@@ -98,21 +87,77 @@ describe Loggability do
 
 	end
 
+	context "installed in a class as a logging client" do
 
-	context "aggregate methods" do
-
-		it "propagate some setting methods to every Logger" do
-			origin = Class.new do
+		before( :each ) do
+			@loghost = Module.new do
 				extend Loggability
 				log_as :testing
 			end
-			Loggability.level = :warn
-			Loggability.output_to( $stdout )
-			Loggability.format_with( :color )
 
-			Loggability[ origin ].level.should == :warn
-			Loggability[ origin ].logdev.dev.should be( $stdout )
-			Loggability[ origin ].formatter.class.should == Loggability::Formatter::Color
+			@class = Class.new do
+				extend Loggability
+				log_to :testing
+			end
+		end
+
+		after( :each ) do
+			Loggability.clear_loghosts
+		end
+
+
+		it "has a proxy for its log host's logger" do
+			@class.log.logger.should be( @loghost.logger )
+		end
+
+		it "is associated with its log host's logger through the Loggability module" do
+			Loggability[ @class ].should be( @loghost.logger )
+		end
+
+		it "has a proxy for its log host's logger available from its instances" do
+			obj = @class.new
+			obj.log.logger.should be( @loghost.logger )
+		end
+
+
+		it "is associated with its log host's logger via its instances through the Loggability module" do
+			obj = @class.new
+			Loggability[ obj ].should be( @loghost.logger )
+		end
+
+		it "propagates its log host key to subclasses" do
+			subclass = Class.new( @class )
+			subclass.log.logger.should be( @loghost.logger )
+			Loggability[ subclass ].should be( @loghost.logger )
+		end
+
+	end
+
+
+	context "aggregate methods" do
+
+		before( :each ) do
+			Loggability.clear_loghosts
+			@loghost = Class.new do
+				extend Loggability
+				log_as :testing
+			end
+		end
+
+
+		it "can propagate a logging level to every loghost" do
+			Loggability.level = :warn
+			Loggability[ @loghost ].level.should == :warn
+		end
+
+		it "can propagate an outputter to every loghost" do
+			Loggability.output_to( $stdout )
+			Loggability[ @loghost ].logdev.dev.should be( $stdout )
+		end
+
+		it "can propagate a formatter to every loghost" do
+			Loggability.format_with( :color )
+			Loggability[ @loghost ].formatter.should be_a( Loggability::Formatter::Color )
 		end
 
 	end

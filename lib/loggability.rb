@@ -214,27 +214,6 @@ module Loggability
 	end # module LogHost
 
 
-	#
-	# :section: LogHost API
-	#
-
-	### Register as a log host associated with the given +key+, add the methods from
-	### LogHost, and install a Loggability::Logger.
-	def log_as( key )
-		self.extend( Loggability::LogHost )
-		self.log_host_key = key.to_sym
-		self.logger = self.default_logger = Loggability::Logger.new
-		Loggability.register_loghost( self )
-	end
-
-	# Install a global logger in Loggability itself
-	extend( Loggability::LogHost )
-	self.log_host_key = GLOBAL_KEY
-	self.logger = self.default_logger = Loggability::Logger.new
-	Loggability.register_loghost( self )
-
-
-
 	# Methods to install for objects which call +log_to+.
 	module LogClient
 
@@ -280,6 +259,22 @@ module Loggability
 
 
 	#
+	# :section: LogHost API
+	#
+
+	### Register as a log host associated with the given +key+, add the methods from
+	### LogHost, and install a Loggability::Logger.
+	def log_as( key )
+		extend( Loggability::LogHost )
+		include( Loggability::LogClient::InstanceMethods ) if self.is_a?( Class )
+
+		self.log_host_key = key.to_sym
+		self.logger = self.default_logger = Loggability::Logger.new
+		Loggability.register_loghost( self )
+	end
+
+
+	#
 	# :section: LogClient API
 	#
 
@@ -292,6 +287,13 @@ module Loggability
 
 		self.log_host_key = Loggability.log_host_key_for( loghost )
 	end
+
+
+	# Install a global logger in Loggability itself
+	extend( Loggability::LogHost )
+	self.log_host_key = GLOBAL_KEY
+	self.logger = self.default_logger = Loggability::Logger.new
+	Loggability.register_loghost( self )
 
 
 	#
