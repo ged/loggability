@@ -1,3 +1,9 @@
+== v0.6.0 [2013-03-14] Michael Granger <ged@FaerieMUD.org>
+
+- Give instances of loghost classes logclient instance methods (e.g., #log).
+- Test under Ruby 2.0.0 by default.
+
+
 == v0.5.0 [2012-08-03] Michael Granger <ged@FaerieMUD.org>
 
 - Remove dependency on PluginFactory/Pluggability to avoid circular
