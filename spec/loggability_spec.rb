@@ -163,7 +163,7 @@ describe Loggability do
 	end
 
 
-	describe "Configurability support" do
+	describe "Configurability support", :configurability do
 
 		after( :each ) do
 			File.delete( 'spec-error.log' ) if File.exist?( 'spec-error.log' )

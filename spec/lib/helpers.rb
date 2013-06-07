@@ -20,6 +20,10 @@ if ENV['COVERAGE']
 	end
 end
 
+begin
+	require 'configurability'
+rescue LoadError
+end
 
 require 'loggability' unless defined?( Loggability )
 require 'loggability/spechelpers'
@@ -28,7 +32,9 @@ require 'loggability/spechelpers'
 ### Mock with RSpec
 RSpec.configure do |c|
 	c.mock_with( :rspec )
+	c.treat_symbols_as_metadata_keys_with_true_values = true
 
 	c.include( Loggability::SpecHelpers )
+	c.filter_run_excluding( :configurability ) unless defined?( Configurability )
 end
 

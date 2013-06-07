@@ -9,7 +9,7 @@ require 'date'
 module Loggability
 
 	# Package version constant
-	VERSION = '0.6.0'
+	VERSION = '0.6.1'
 
 	# VCS revision
 	REVISION = %q$Revision$
@@ -299,20 +299,6 @@ module Loggability
 	#
 	# :section: Configurability Support
 	#
-
-	# Load the Configurability library if it's installed
-	begin
-		require 'configurability'
-	rescue LoadError
-	end
-
-
-	# Configurability support -- load Loggability configuration from the 'logging' section
-	# of the config.
-	if defined?( Configurability )
-		extend Configurability
-		config_key :logging if respond_to?( :config_key )
-	end
 
 	### Configurability API -- configure logging.
 	def self::configure( config=nil )
