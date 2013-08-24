@@ -21,12 +21,11 @@ hoespec = Hoe.spec 'loggability' do
 
 	self.developer 'Michael Granger', 'ged@FaerieMUD.org'
 
-	self.dependency 'hoe-deveiate',    '~> 0.1', :developer
-	self.dependency 'simplecov',       '~> 0.6', :developer
-	self.dependency 'configurability', '~> 2.0.1', :developer
+	self.dependency 'hoe-deveiate',    '~> 0.3', :developer
+	self.dependency 'simplecov',       '~> 0.7', :developer
+	self.dependency 'configurability', '~> 2.0', :developer
 
 	self.spec_extras[:licenses] = ["Ruby"]
-	self.spec_extras[:rdoc_options] = ['-f', 'fivefish', '-t', 'Loggability Toolkit']
 	self.require_ruby_version( '>=1.8.7' )
 	self.hg_sign_tags = true if self.respond_to?( :hg_sign_tags= )
 	self.check_history_on_release = true if self.respond_to?( :check_history_on_release= )

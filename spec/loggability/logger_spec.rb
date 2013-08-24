@@ -46,6 +46,16 @@ describe Loggability::Logger do
 	end
 
 
+	it "writes to itself at :debug level if appended to" do
+		results = []
+		@logger.level = :debug
+		@logger.output_to( results )
+		@logger << "This is an appended message."
+
+		results.first.should =~ /debug.*this is an appended message/i
+	end
+
+
 	describe "severity level API" do
 
 		it "defaults to :warn level" do
