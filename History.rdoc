@@ -1,3 +1,8 @@
+== v0.7.0 [2013-08-23] Michael Granger <ged@FaerieMUD.org>
+
+- Override Logger#<< to always append with formatting and level.
+
+
 == v0.6.1 [2013-06-07] Mahlon E. Smith <mahlon@martini.nu>
 
 - Repair relationship with Configurability.
