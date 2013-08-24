@@ -176,6 +176,15 @@ class Loggability::Logger < ::Logger
 	end
 
 
+	### Append operator -- Override Logger's append so log messages always have
+	### formatting, and are always appended at :debug level.
+	def <<( message )
+		unless self.logdev.nil?
+			self.add( Logger::DEBUG, message )
+		end
+	end
+
+
 	#
 	# :section: Severity Level
 	#
