@@ -1,14 +1,10 @@
 # -*- rspec -*-
 
-BEGIN {
-	require 'pathname'
-	basedir = Pathname( __FILE__ ).dirname.parent.parent
-	$LOAD_PATH.unshift( basedir.to_s ) unless $LOAD_PATH.include?( basedir.to_s )
-}
+require_relative '../helpers'
 
 require 'tempfile'
 require 'rspec'
-require 'spec/lib/helpers'
+
 require 'loggability/logger'
 require 'loggability/formatter'
 require 'loggability/formatter/default'
@@ -32,17 +28,17 @@ describe Loggability::Logger do
 
 
 	it "has a less-verbose inspection format than that of its parent" do
-		@logger.inspect.should =~ /severity: \S+ formatter: \S+ outputting to: \S+/
+		expect( @logger.inspect ).to match( /severity: \S+ formatter: \S+ outputting to: \S+/ )
 	end
 
 
 	it "provides an upgrade constructor for regular Logger objects" do
 		logger = ::Logger.new( $stderr )
 		newlogger = described_class.from_std_logger( logger )
-		newlogger.should be_a( Loggability::Logger )
-		newlogger.logdev.dev.should be( logger.instance_variable_get(:@logdev).dev )
-		Loggability::LOG_LEVELS[ newlogger.level ].should == logger.level
-		newlogger.formatter.should be_a( Loggability::Formatter::Default )
+		expect( newlogger ).to be_a( Loggability::Logger )
+		expect( newlogger.logdev.dev ).to be( logger.instance_variable_get(:@logdev).dev )
+		expect( Loggability::LOG_LEVELS[newlogger.level] ).to eq( logger.level )
+		expect( newlogger.formatter ).to be_a( Loggability::Formatter::Default )
 	end
 
 
@@ -52,20 +48,20 @@ describe Loggability::Logger do
 		@logger.output_to( results )
 		@logger << "This is an appended message."
 
-		results.first.should =~ /debug.*this is an appended message/i
+		expect( results.first ).to match( /debug.*this is an appended message/i )
 	end
 
 
 	describe "severity level API" do
 
 		it "defaults to :warn level" do
-			@logger.level.should == :warn
+			expect( @logger.level ).to eq( :warn )
 		end
 
 		it "defaults to :debug level when $DEBUG is true" do
 			begin
 				$DEBUG = true
-				described_class.new.level.should == :debug
+				expect( described_class.new.level ).to eq( :debug )
 			ensure
 				$DEBUG = false
 			end
@@ -75,17 +71,17 @@ describe Loggability::Logger do
 			newlevel = Logger::DEBUG
 			$stderr.puts "Setting newlevel to %p" % [ newlevel ]
 			@logger.level = newlevel
-			@logger.level.should == :debug
+			expect( @logger.level ).to eq( :debug )
 		end
 
 		it "allows its levels to be set with Symbolic level names" do
 			@logger.level = :info
-			@logger.level.should == :info
+			expect( @logger.level ).to eq( :info )
 		end
 
 		it "allows its levels to be set with Stringish level names" do
 			@logger.level = 'fatal'
-			@logger.level.should == :fatal
+			expect( @logger.level ).to eq( :fatal )
 		end
 
 	end
@@ -94,32 +90,32 @@ describe Loggability::Logger do
 	describe "log device API" do
 
 		it "logs to STDERR by default" do
-			@logger.logdev.dev.should be( $stderr )
+			expect( @logger.logdev.dev ).to be( $stderr )
 		end
 
 		it "can be told to log to a file" do
 			tmpfile = Tempfile.new( 'loggability-device-spec' )
 			@logger.output_to( tmpfile.path )
-			@logger.logdev.dev.should be_a( File )
+			expect( @logger.logdev.dev ).to be_a( File )
 		end
 
 		it "supports log-rotation arguments for logfiles" do
 			tmpfile = Tempfile.new( 'loggability-device-spec' )
 			@logger.output_to( tmpfile.path, 5, 125000 )
-			@logger.logdev.dev.should be_a( File )
-			@logger.logdev.filename.should == tmpfile.path
-			@logger.logdev.instance_variable_get( :@shift_age ).should == 5
-			@logger.logdev.instance_variable_get( :@shift_size ).should == 125000
+			expect( @logger.logdev.dev ).to be_a( File )
+			expect( @logger.logdev.filename ).to eq( tmpfile.path )
+			expect( @logger.logdev.instance_variable_get(:@shift_age) ).to eq( 5 )
+			expect( @logger.logdev.instance_variable_get(:@shift_size) ).to eq( 125000 )
 		end
 
 		it "can be told to log to an Array" do
 			logmessages = []
 			@logger.output_to( logmessages )
-			@logger.logdev.should be_a( Loggability::Logger::AppendingLogDevice )
+			expect( @logger.logdev ).to be_a( Loggability::Logger::AppendingLogDevice )
 			@logger.level = :debug
 			@logger.info( "Something happened." )
-			logmessages.should have( 1 ).member
-			logmessages.first.should =~ /something happened/i
+			expect( logmessages ).to have( 1 ).member
+			expect( logmessages.first ).to match( /something happened/i )
 		end
 
 	end
@@ -128,12 +124,12 @@ describe Loggability::Logger do
 	describe "formatter API" do
 
 		it "logs with the default formatter by default" do
-			@logger.formatter.should be_a( Loggability::Formatter::Default )
+			expect( @logger.formatter ).to be_a( Loggability::Formatter::Default )
 		end
 
 		it "can be told to use the default formatter explicitly" do
 			@logger.format_as( :default )
-			@logger.formatter.should be_a( Loggability::Formatter::Default )
+			expect( @logger.formatter ).to be_a( Loggability::Formatter::Default )
 		end
 
 		it "can be told to use a block as a formatter" do
@@ -141,12 +137,12 @@ describe Loggability::Logger do
 				original_formatter.call(severity, datetime, progname, msg.dump)
 			end
 
-			@logger.formatter.should be_a( Proc )
+			expect( @logger.formatter ).to be_a( Proc )
 		end
 
 		it "can be told to use the HTML formatter" do
 			@logger.format_as( :html )
-			@logger.formatter.should be_a( Loggability::Formatter::HTML )
+			expect( @logger.formatter ).to be_a( Loggability::Formatter::HTML )
 		end
 
 		it "supports formatting with ::Logger::Formatter, too" do
@@ -155,7 +151,9 @@ describe Loggability::Logger do
 			@logger.level = :debug
 			@logger.formatter = ::Logger::Formatter.new
 			@logger.debug "This should work."
-			output.first.should =~ /D, \[\d{4}-\d\d-\d\dT\d\d:\d\d:\d\d.\d+ #\d+\] DEBUG -- : This should work.\n/
+
+			expect( output.first ).
+				to match(/D, \[\d{4}-\d\d-\d\dT\d\d:\d\d:\d\d.\d+ #\d+\] DEBUG -- : This should work.\n/)
 		end
 
 	end
@@ -176,7 +174,7 @@ describe Loggability::Logger do
 			proxy.error( "An error message." )
 			proxy.fatal( "A fatal message." )
 
-			messages.first.should =~ /DEBUG \{Object:0x[[:xdigit:]]+\} -- A debug message.\n/i
+			expect( messages.first ).to match(/DEBUG \{Object:0x[[:xdigit:]]+\} -- A debug message.\n/i)
 		end
 
 		it "has a terse inspection format" do

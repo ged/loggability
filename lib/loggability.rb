@@ -53,6 +53,11 @@ module Loggability
 	@log_hosts = {}
 
 
+	# Automatically log the log host and log client mixins when they're referenced
+	autoload :LogHost, 'loggability/loghost'
+	autoload :LogClient, 'loggability/logclient'
+
+
 	### Return the library's version string
 	def self::version_string( include_buildnum=false )
 		vstring = "%s %s" % [ self.name, VERSION ]
@@ -177,85 +182,6 @@ module Loggability
 		alias_method :format_as, :format_with
 		alias_method :formatter=, :format_with
 	end
-
-
-	# Extension for 'log hosts'. A <b>log host</b> is an object that hosts a Loggability::Logger
-	# object, and is typically the top of some kind of hierarchy, like a namespace
-	# module for a project:
-	#
-	#     module MyProject
-	#
-	#     end
-	#
-	# This module isn't mean to be used directly -- it's installed via the Loggability#log_as
-	# declaration, which also does some other initialization that you'll likely want.
-	#
-	#
-	module LogHost
-
-		# The logger that will be used when the logging subsystem is reset
-		attr_accessor :default_logger
-
-		# The logger that's currently in effect
-		attr_reader :logger
-		alias_method :log, :logger
-
-		# The key associated with the logger for this host
-		attr_accessor :log_host_key
-
-
-		### Set the logger associated with the LogHost to +newlogger+. If +newlogger+ isn't a
-		### Loggability::Logger, it will be converted to one.
-		def logger=( newlogger )
-			@logger = Loggability::Logger( newlogger )
-		end
-		alias_method :log=, :logger=
-
-	end # module LogHost
-
-
-	# Methods to install for objects which call +log_to+.
-	module LogClient
-
-		##
-		# The key of the log host this client targets
-		attr_accessor :log_host_key
-
-		### Return the Loggability::Logger object associated with the log host the
-		### client is logging to.
-		### :TODO: Use delegation for efficiency.
-		def log
-			@__log ||= Loggability[ self ].proxy_for( self )
-		end
-
-
-		### Inheritance hook -- set the log host key of subclasses to the same
-		### thing as the extended class.
-		def inherited( subclass )
-			super
-			Loggability.log.debug "Setting up subclass %p of %p to log to %p" %
-				[ subclass, self, self.log_host_key ]
-			subclass.log_host_key = self.log_host_key
-		end
-
-
-		# Stuff that gets added to instances of Classes that are log hosts.
-		module InstanceMethods
-
-			### Fetch the key of the log host the instance of this client targets
-			def log_host_key
-				return self.class.log_host_key
-			end
-
-
-			### Delegate to the class's logger.
-			def log
-				@__log ||= Loggability[ self.class ].proxy_for( self )
-			end
-
-		end # module InstanceMethods
-
-	end # module LogClient
 
 
 	#

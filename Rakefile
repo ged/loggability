@@ -11,6 +11,7 @@ end
 Hoe.plugin :mercurial
 Hoe.plugin :signing
 Hoe.plugin :deveiate
+Hoe.plugin :bundler
 
 Hoe.plugins.delete :rubyforge
 
@@ -22,11 +23,12 @@ hoespec = Hoe.spec 'loggability' do
 	self.developer 'Michael Granger', 'ged@FaerieMUD.org'
 
 	self.dependency 'hoe-deveiate',    '~> 0.3', :developer
+	self.dependency 'hoe-bundler',     '~> 1.2', :developer
 	self.dependency 'simplecov',       '~> 0.7', :developer
 	self.dependency 'configurability', '~> 2.0', :developer
 
-	self.spec_extras[:licenses] = ["Ruby"]
-	self.require_ruby_version( '>=1.8.7' )
+	self.license "Ruby"
+	self.require_ruby_version( '>=1.9.3' )
 	self.hg_sign_tags = true if self.respond_to?( :hg_sign_tags= )
 	self.check_history_on_release = true if self.respond_to?( :check_history_on_release= )
 
@@ -36,7 +38,7 @@ end
 ENV['VERSION'] ||= hoespec.spec.version.to_s
 
 # Ensure the specs pass before checking in
-task 'hg:precheckin' => [ :check_history, :check_manifest, :spec ]
+task 'hg:precheckin' => [ :check_history, 'bundler:gemfile', :check_manifest, :spec ]
 
 
 desc "Build a coverage report"

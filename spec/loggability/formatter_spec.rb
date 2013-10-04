@@ -1,14 +1,10 @@
 # -*- rspec -*-
 
-BEGIN {
-	require 'pathname'
-	basedir = Pathname( __FILE__ ).dirname.parent.parent
-	$LOAD_PATH.unshift( basedir.to_s ) unless $LOAD_PATH.include?( basedir.to_s )
-}
+require_relative '../helpers'
 
 require 'tempfile'
 require 'rspec'
-require 'spec/lib/helpers'
+
 require 'loggability/logger'
 require 'loggability/formatter'
 require 'loggability/formatter/default'
@@ -18,8 +14,8 @@ describe Loggability::Formatter do
 
 	it "formats messages with the pattern it's constructed with" do
 		formatter = Loggability::Formatter.new( '[%5$s] %7$s' )
-		formatter.call( 'INFO', Time.at(1336286481), nil, 'Foom.' ).should =~
-			/\[INFO\] Foom./i
+		result = formatter.call( 'INFO', Time.at(1336286481), nil, 'Foom.' )
+		expect( result ).to match(/\[INFO\] Foom./i)
 	end
 
 	it "formats exceptions into useful messages" do
@@ -32,13 +28,14 @@ describe Loggability::Formatter do
 			msg = formatter.call( 'INFO', Time.at(1336286481), nil, err )
 		end
 
-		msg.should =~ /\[INFO\] ArgumentError: invalid argument/i
+		expect( msg ).to match(/\[INFO\] ArgumentError: invalid argument/i)
 	end
 
 	it "formats regular objects into useful messages" do
 		formatter = Loggability::Formatter.new( '[%5$s] %7$s' )
-		formatter.call( 'INFO', Time.at(1336286481), nil, Object.new ).should =~
-			/\[INFO\] #<Object:0x[[:xdigit:]]+>/i
+		result = formatter.call( 'INFO', Time.at(1336286481), nil, Object.new )
+
+		expect( result ).to match(/\[INFO\] #<Object:0x[[:xdigit:]]+>/i)
 	end
 
 end
