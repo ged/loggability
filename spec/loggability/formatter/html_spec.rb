@@ -1,14 +1,11 @@
 # -*- rspec -*-
+#encoding: utf-8
 
-BEGIN {
-	require 'pathname'
-	basedir = Pathname( __FILE__ ).dirname.parent.parent.parent
-	$LOAD_PATH.unshift( basedir.to_s ) unless $LOAD_PATH.include?( basedir.to_s )
-}
+require_relative '../../helpers'
 
 require 'tempfile'
 require 'rspec'
-require 'spec/lib/helpers'
+
 require 'loggability/logger'
 require 'loggability/formatter'
 require 'loggability/formatter/html'
