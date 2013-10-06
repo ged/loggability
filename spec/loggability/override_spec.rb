@@ -118,5 +118,17 @@ describe Loggability::Override do
 		expect( override.settings ).to eq({ formatter: :color })
 	end
 
+
+	it "has additive mutators" do
+		override = described_class.
+			formatted_with( :color ).
+			with_level( :debug ).
+			outputting_to( $stdout )
+
+		expect( override.settings[:formatter] ).to be( :color )
+		expect( override.settings[:logdev] ).to be( $stdout )
+		expect( override.settings[:level] ).to be( :debug )
+	end
+
 end
 

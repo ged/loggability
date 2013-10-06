@@ -9,11 +9,15 @@ lib/loggability/formatter.rb
 lib/loggability/formatter/color.rb
 lib/loggability/formatter/default.rb
 lib/loggability/formatter/html.rb
+lib/loggability/logclient.rb
 lib/loggability/logger.rb
+lib/loggability/loghost.rb
+lib/loggability/override.rb
 lib/loggability/spechelpers.rb
-spec/lib/helpers.rb
+spec/helpers.rb
 spec/loggability/formatter/color_spec.rb
 spec/loggability/formatter/html_spec.rb
 spec/loggability/formatter_spec.rb
 spec/loggability/logger_spec.rb
+spec/loggability/override_spec.rb
 spec/loggability_spec.rb
