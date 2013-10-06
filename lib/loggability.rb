@@ -151,6 +151,21 @@ module Loggability
 	end
 
 
+	### Aggregate method: set the log level on all loggers to +level+ for the duration
+	### of the +block+, restoring the original levels afterward. If no block is given, returns a
+	### Loggability::Override object that set the log level to +level+ while its +#call+
+	### method is being called.
+	def self::with_level( level, &block )
+		override = Loggability::Override.with_level( level )
+
+		if block
+			return override.call( &block )
+		else
+			return override
+		end
+	end
+
+
 	##
 	# :method: output_to
 	# :call-seq:
@@ -168,8 +183,8 @@ module Loggability
 
 
 	### Aggregate method: set all loggers to log to +destination+ for the duration of the
-	### +block+, restoring the original destination afterward. If no block is given, returns a 
-	### Loggability::Override object that will log to +destination+ whenever its +#call+ method is 
+	### +block+, restoring the original destination afterward. If no block is given, returns a
+	### Loggability::Override object that will log to +destination+ whenever its +#call+ method is
 	### called.
 	def self::outputting_to( newdevice, &block )
 		override = Loggability::Override.outputting_to( newdevice )
@@ -197,6 +212,21 @@ module Loggability
 	class << self
 		alias_method :format_as, :format_with
 		alias_method :formatter=, :format_with
+	end
+
+
+	### Aggregate method: set all loggers to log with the given +formatter+ for the duration
+	### of the +block+, restoring the original formatters afterward. If no block is given,
+	### returns a Loggability::Override object that will override all formatters whenever its
+	### +#call+ method is called.
+	def self::formatted_with( formatter, &block )
+		override = Loggability::Override.formatted_with( formatter )
+
+		if block
+			return override.call( &block )
+		else
+			return override
+		end
 	end
 
 

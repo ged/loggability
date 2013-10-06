@@ -14,7 +14,7 @@ require 'loggability' unless defined?( Loggability )
 # * Loggability.with_level
 # * Loggability.outputting_to
 # * Loggability.formatted_with
-# 
+#
 class Loggability::Override
 	include MonitorMixin
 
@@ -60,7 +60,7 @@ class Loggability::Override
 	### when duplicated.
 	def initialize_copy( original )
 		@settings = original.settings.dup
-		@overridden_settings = original.overridden_settings.dup
+		@overridden_settings = {}
 	end
 
 
@@ -112,16 +112,26 @@ class Loggability::Override
 	end
 
 
+	### Return the object as a human-readable string suitable for debugging.
+	def inspect
+		return "#<%p:%#016x formatter: %s, level: %s, output: %s>" % [
+			self.class,
+			self.object_id * 2,
+			self.settings[:formatter] || '-',
+			self.settings[:level] || '-',
+			self.settings[:logdev] ? self.settings[:logdev].class : '-',
+		]
+	end
+
 
 	#########
 	protected
 	#########
 
-
 	### Return a clone that has been modified with the specified +new_settings+.
 	def clone_with( new_settings )
 		newobj = self.dup
-		newobj.settings.replace( new_settings )
+		newobj.settings.merge!( new_settings )
 
 		return newobj
 	end

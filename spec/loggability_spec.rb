@@ -202,6 +202,64 @@ describe Loggability do
 			end
 
 
+			it "can temporarily override what level Loggability logs at while executing a block" do
+				Loggability[ @loghost ].debug "Before the override"
+				Loggability.with_level( :debug ) do
+					Loggability[ @loghost ].debug "During the override"
+				end
+				Loggability[ @loghost ].debug "After the override"
+
+				expect( @default_output ).to have( 1 ).log_entry
+			end
+
+
+			it "can return an object that overrides what level Loggability logs at for any block" do
+				with_debug_logging = Loggability.with_level( :debug )
+
+				Loggability[ @loghost ].debug "Before the overrides"
+				with_debug_logging.call do
+					Loggability[ @loghost ].debug "During the first override"
+				end
+				Loggability[ @loghost ].debug "Between overrides"
+				with_debug_logging.call do
+					Loggability[ @loghost ].debug "During the second override"
+				end
+				Loggability[ @loghost ].debug "After the overrides"
+
+				expect( @default_output ).to have( 2 ).log_entries
+			end
+
+
+			it "can temporarily override what formatter loggers use while executing a block" do
+				Loggability[ @loghost ].info "Before the override"
+				Loggability.formatted_with( :html ) do
+					Loggability[ @loghost ].info "During the override"
+				end
+				Loggability[ @loghost ].info "After the override"
+
+				expect( @default_output ).to have( 3 ).log_entries
+				expect( @default_output.grep(/<div/) ).to have( 1 ).entry
+			end
+
+
+			it "can return an object that overrides what formatter loggers use for any block" do
+				with_html_logging = Loggability.formatted_with( :html )
+
+				Loggability[ @loghost ].info "Before the overrides"
+				with_html_logging.call do
+					Loggability[ @loghost ].info "During the first override"
+				end
+				Loggability[ @loghost ].info "Between overrides"
+				with_html_logging.call do
+					Loggability[ @loghost ].info "During the second override"
+				end
+				Loggability[ @loghost ].info "After the overrides"
+
+				expect( @default_output ).to have( 5 ).log_entries
+				expect( @default_output.grep(/<div/) ).to have( 2 ).log_entries
+			end
+
+
 		end
 
 
