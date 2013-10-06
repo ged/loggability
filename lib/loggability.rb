@@ -56,6 +56,7 @@ module Loggability
 	# Automatically log the log host and log client mixins when they're referenced
 	autoload :LogHost, 'loggability/loghost'
 	autoload :LogClient, 'loggability/logclient'
+	autoload :Override, 'loggability/override'
 
 
 	### Return the library's version string
@@ -163,6 +164,21 @@ module Loggability
 	end
 	class << self
 		alias_method :write_to, :output_to
+	end
+
+
+	### Aggregate method: set all loggers to log to +destination+ for the duration of the
+	### +block+, restoring the original destination afterward. If no block is given, returns a 
+	### Loggability::Override object that will log to +destination+ whenever its +#call+ method is 
+	### called.
+	def self::outputting_to( newdevice, &block )
+		override = Loggability::Override.outputting_to( newdevice )
+
+		if block
+			return override.call( &block )
+		else
+			return override
+		end
 	end
 
 

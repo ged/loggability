@@ -52,6 +52,46 @@ describe Loggability::Logger do
 	end
 
 
+	it "can return a Hash of its current settings" do
+		expect( @logger.settings ).to be_a( Hash )
+		expect( @logger.settings ).to include( :level, :formatter, :logdev )
+		expect( @logger.settings[:level] ).to eq( @logger.level )
+		expect( @logger.settings[:formatter] ).to eq( @logger.formatter )
+		expect( @logger.settings[:logdev] ).to eq( @logger.logdev )
+	end
+
+
+	it "can restore its settings from a Hash" do
+		settings = @logger.settings
+
+		@logger.level = :fatal
+		@logger.formatter = Loggability::Formatter.create( :html )
+		@logger.output_to( [] )
+
+		@logger.restore_settings( settings )
+
+		expect( @logger.level ).to be( settings[:level] )
+		expect( @logger.formatter ).to be( settings[:formatter] )
+		expect( @logger.logdev ).to be( settings[:logdev] )
+	end
+
+
+	it "ignores missing keys when restoring its settings from a Hash" do
+		settings = @logger.settings
+		settings.delete( :level )
+
+		@logger.level = :fatal
+		@logger.formatter = Loggability::Formatter.create( :html )
+		@logger.output_to( [] )
+
+		@logger.restore_settings( settings )
+
+		expect( @logger.level ).to be( :fatal )
+		expect( @logger.formatter ).to be( settings[:formatter] )
+		expect( @logger.logdev ).to be( settings[:logdev] )
+	end
+
+
 	describe "severity level API" do
 
 		it "defaults to :warn level" do
@@ -116,6 +156,24 @@ describe Loggability::Logger do
 			@logger.info( "Something happened." )
 			expect( logmessages ).to have( 1 ).member
 			expect( logmessages.first ).to match( /something happened/i )
+		end
+
+		it "doesn't re-wrap a Logger::LogDevice" do
+			tmpfile = Tempfile.new( 'loggability-device-spec' )
+			@logger.output_to( tmpfile.path, 5, 125000 )
+
+			original_logdev = @logger.logdev
+			@logger.output_to( original_logdev )
+
+			expect( @logger.logdev ).to be( original_logdev )
+		end
+
+		it "doesn't re-wrap an AppendingLogDevice" do
+			log_array = []
+			@logger.output_to( log_array )
+			@logger.output_to( @logger.logdev )
+
+			expect( @logger.logdev.target ).to be( log_array )
 		end
 
 	end
