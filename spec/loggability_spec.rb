@@ -159,6 +159,52 @@ describe Loggability do
 			expect( Loggability[@loghost].formatter ).to be_a( Loggability::Formatter::Color )
 		end
 
+
+		describe "overrideable behaviors" do
+
+			before( :each ) do
+				@default_output = []
+				Loggability.level = :info
+				Loggability.output_to( @default_output )
+			end
+
+
+			it "can temporarily override where Loggability outputs to while executing a block" do
+				tmp_output = []
+
+				Loggability[ @loghost ].info "Before the override"
+				Loggability.outputting_to( tmp_output ) do
+					Loggability[ @loghost ].info "During the override"
+				end
+				Loggability[ @loghost ].info "After the override"
+
+				expect( @default_output ).to have( 2 ).log_entries
+				expect( tmp_output ).to have( 1 ).log_entry
+			end
+
+
+			it "can return an object that overrides where Loggability outputs to for any block" do
+				tmp_output = []
+				with_tmp_logging = Loggability.outputting_to( tmp_output )
+
+				Loggability[ @loghost ].info "Before the overrides"
+				with_tmp_logging.call do
+					Loggability[ @loghost ].info "During the first override"
+				end
+				Loggability[ @loghost ].info "Between overrides"
+				with_tmp_logging.call do
+					Loggability[ @loghost ].info "During the second override"
+				end
+				Loggability[ @loghost ].info "After the overrides"
+
+				expect( @default_output ).to have( 3 ).log_entries
+				expect( tmp_output ).to have( 2 ).log_entries
+			end
+
+
+		end
+
+
 	end
 
 

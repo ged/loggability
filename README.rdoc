@@ -206,6 +206,36 @@ methods on Loggability::Logger:
     Loggability.output_to( "/tmp/my_project_log.html" )
 
 
+=== Temporarily Overriding Logging  Behavior
+
+Sometimes you want to log one particular chunk of code at a different
+level, or to a different destination, and then restore everything back
+to the way it was afterwards.
+
+Loggability has a few ways of doing that:
+
+    # Log only fatal errors...
+    Loggability.with_level( :fatal ) do
+		    ...
+		end
+
+    # Log everything to an array for the block
+    logs = []
+		Loggability.outputting_to( logs ) do
+		    ...
+		end
+    
+		# Log using the HTML formatter
+		Loggability.formatted_with( :html ) do
+		    ...
+		end
+
+    # Or chain them together:
+    Loggability.with_level( :debug ).outputting_to( $stderr ).formatted_with( :color ) do
+		    Client.connect!
+		end
+
+
 == Contributing
 
 You can check out the current development source with
