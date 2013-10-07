@@ -1,3 +1,11 @@
+== v0.8.0 [2013-10-06] Michael Granger <ged@FaerieMUD.org>
+
+- Add mechanism for temporary aggregated overrides
+- Split out LogHost and LogClient mixins into their own files
+- Added generated gemspec and Gemfile
+- Dropped support for Ruby < 1.9.3.
+
+
 == v0.7.0 [2013-08-23] Michael Granger <ged@FaerieMUD.org>
 
 - Override Logger#<< to always append with formatting and level.
