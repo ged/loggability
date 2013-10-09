@@ -1,3 +1,8 @@
+== v0.8.1 [2013-10-09] Michael Granger <ged@FaerieMUD.org>
+
+- Fix the problem with blocks not being called in chained overrides.
+
+
 == v0.8.0 [2013-10-06] Michael Granger <ged@FaerieMUD.org>
 
 - Add mechanism for temporary aggregated overrides
