@@ -130,5 +130,21 @@ describe Loggability::Override do
 		expect( override.settings[:level] ).to be( :debug )
 	end
 
+	it "executes a block passed to a mutator with the mutated override" do
+		Loggability.level = :info
+		Loggability.format_with( :default )
+
+		log = []
+		result = override.formatted_with( :html ).with_level( :debug ).outputting_to( log ) do
+			Loggability[ loghost ].debug "Doing it!"
+			:did_it
+		end
+
+
+		expect( result ).to eq( :did_it )
+		expect( log ).to have( 1 ).entry
+		expect( log.first ).to match( /Doing it!/ )
+	end
+
 end
 

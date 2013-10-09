@@ -19,21 +19,27 @@ class Loggability::Override
 	include MonitorMixin
 
 
-	### Return an Override with its logging level set to +newlevel+.
-	def self::with_level( new_level )
-		return self.new( level: new_level )
+	### Set up an Override with its logging level set to +newlevel+. If called with
+	### a block, call #call immediately on the Override with the block and return
+	### the result of that instead.
+	def self::with_level( new_level, &block )
+		return self.new( level: new_level, &block )
 	end
 
 
-	### Return an Override with its logging output set to +new_destination+.
-	def self::outputting_to( new_destination )
-		return self.new( logdev: new_destination )
+	### Set up an Override with its logging output set to +new_destination+. If called with
+	### a block, call #call immediately on the Override with the block and return
+	### the result of that instead.
+	def self::outputting_to( new_destination, &block )
+		return self.new( logdev: new_destination, &block )
 	end
 
 
-	### Return an Override with its logging formatter set to +formatter+.
-	def self::formatted_with( new_formatter )
-		return self.new( formatter: new_formatter )
+	### Set up an Override with its logging formatter set to +formatter+. If called with
+	### a block, call #call immediately on the Override with the block and return
+	### the result of that instead.
+	def self::formatted_with( new_formatter, &block )
+		return self.new( formatter: new_formatter, &block )
 	end
 
 
@@ -93,22 +99,22 @@ class Loggability::Override
 
 	### Return a clone of the receiving Override with its logging level
 	### set to +newlevel+.
-	def with_level( new_level )
-		return self.clone_with( level: new_level )
+	def with_level( new_level, &block )
+		return self.clone_with( level: new_level, &block )
 	end
 
 
 	### Return a clone of the receiving Override with its logging output
 	### set to +new_destination+.
-	def outputting_to( new_destination )
-		return self.clone_with( logdev: new_destination )
+	def outputting_to( new_destination, &block )
+		return self.clone_with( logdev: new_destination, &block )
 	end
 
 
 	### Return a clone of the receiving Override with its logging formatter
 	### set to +formatter+.
-	def formatted_with( new_formatter )
-		return self.clone_with( formatter: new_formatter )
+	def formatted_with( new_formatter, &block )
+		return self.clone_with( formatter: new_formatter, &block )
 	end
 
 
@@ -129,11 +135,15 @@ class Loggability::Override
 	#########
 
 	### Return a clone that has been modified with the specified +new_settings+.
-	def clone_with( new_settings )
+	def clone_with( new_settings, &block )
 		newobj = self.dup
 		newobj.settings.merge!( new_settings )
 
-		return newobj
+		if block
+			return newobj.call( &block )
+		else
+			return newobj
+		end
 	end
 
 
