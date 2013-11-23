@@ -45,43 +45,6 @@ An example:
     Loggability.level = :info
 
 
-=== Configurability
-
-Loggability has support for the Configurability[https://rubygems.org/gems/configurability]
-library, which does the same thing for configuration that Loggability does for
-logging.
-
-You can configure all registered loggers from the 'logging' section of the config:
-
-    logging:
-	  __default__: warn STDERR
-	  mongrel2: info STDOUT (html)
-	  strelka: debug (html)
-	  inversion: error /var/log/templating.log (default)
-
-The format of the value of each logger is:
-
-    SEVERITY [TARGET] [(FORMAT)]
-
-where:
-
-[+SEVERITY+]
-  The log level; one of: +debug+, +info+, +warn+, +error+, or +fatal+
-[+TARGET+]
-  The destination for log messages. This can be the path to a log file, or
-  one of <tt>'STDOUT'</tt> or <tt>'STDERR'</tt>, which get mapped to the
-  equivalent filehandle. Optional.
-[+FORMAT+]
-  The name of one of the formatters. Loggability comes with +default+ (plaintext),
-  +color+ (ANSI colored text), and +html+ formatters.
-
-If the special key <tt>__default__</tt> is included, its config will be used to set
-global defaults before the individual configs are applied.
-
-If either of the optional values is unspecified, it is left unchanged from what it
-was before configuration.
-
-
 == Prerequisites
 
 * Ruby 1.9.3 or better, Rubinius 2.0 or better
@@ -216,24 +179,121 @@ Loggability has a few ways of doing that:
 
     # Log only fatal errors...
     Loggability.with_level( :fatal ) do
-		    ...
-		end
+        ...
+    end
 
     # Log everything to an array for the block
     logs = []
-		Loggability.outputting_to( logs ) do
-		    ...
-		end
+    Loggability.outputting_to( logs ) do
+        ...
+    end
     
-		# Log using the HTML formatter
-		Loggability.formatted_with( :html ) do
-		    ...
-		end
+    # Log using the HTML formatter
+    Loggability.formatted_with( :html ) do
+        ...
+    end
 
     # Or chain them together:
     Loggability.with_level( :debug ).outputting_to( $stderr ).formatted_with( :color ) do
-		    Client.connect!
-		end
+        Client.connect!
+    end
+
+
+=== Configurability
+
+Loggability has support for the Configurability[https://rubygems.org/gems/configurability]
+library, which does the same thing for configuration that Loggability does for
+logging.
+
+You can configure all registered loggers from the 'logging' section of the config:
+
+    logging:
+      __default__: warn STDERR
+      mongrel2: info STDOUT (html)
+      strelka: debug (html)
+      inversion: error /var/log/templating.log (default)
+
+The format of the value of each logger is:
+
+    SEVERITY [TARGET] [(FORMAT)]
+
+where:
+
+[+SEVERITY+]
+  The log level; one of: +debug+, +info+, +warn+, +error+, or +fatal+
+[+TARGET+]
+  The destination for log messages. This can be the path to a log file, or
+  one of <tt>'STDOUT'</tt> or <tt>'STDERR'</tt>, which get mapped to the
+  equivalent filehandle. Optional.
+[+FORMAT+]
+  The name of one of the formatters. Loggability comes with +default+ (plaintext),
+  +color+ (ANSI colored text), and +html+ formatters. Optional.
+
+If the special key <tt>__default__</tt> is included, its config will be used to set
+global defaults before the individual configs are applied.
+
+If either of the optional values is unspecified, it is left unchanged from what it
+was before configuration.
+
+
+=== RSpec Helpers
+
+Loggability includes a couple of helper functions for RSpec that allow you to control
+log levels for particular specs.
+
+To use it, require <tt>loggability/spechelpers</tt> in your specs (we put it in the 
+spec helpers file) and then include the helpers from your RSpec config:
+
+  require 'loggability/spechelpers'
+  RSpec.configure do |c|
+    # ...
+    c.include( Loggability::SpecHelpers )
+  end
+
+This will install a before and after `:all` hook to set the logging levels before each
+example group and then reset it before moving on to the next group.
+
+You can also access the bodies of those hooks manually:
+
+  setup_logging( level=:fatal )
+  reset_logging()
+
+The helpers also allow you to set logging levels for a whole example group, for
+particular contexts, or even for individual examples using RSpec's metadata hash
+syntax:
+
+  # Set logging to 'error' level for each example in this group
+  describe MyClass, logging: :error do
+  
+    # ...but for examples in this context, set it to 'fatal'
+    context 'created with a target', log: :fatal do
+    
+      # ...except for this one, which logs at 'debug' level
+      it "does something to it", logging: :debug do
+      
+      end
+    
+      it "does some other stuff, too"
+    
+    end
+  
+  end
+
+The {setup_logging}[rdoc-ref:Loggability::SpecHelpers.setup_logging] helper
+also provides support for displaying the logs inline with spec formatters for
+which outputting the logs to STDERR isn't optimal. The only one that's
+currently uses it is the 
+{'webkit' formatter}[https://rubygems.org/gems/rspec-formatter-webkit], but
+it should be easy to adapt to other HTML displays as well.
+
+It looks for either an +HTML_LOGGING+ environment variable, or for the
++TM_FILENAME+ variable to be set to a filename that ends with '_spec.rb'
+(for Textmate's rspec runner). In either of those conditions, it will set
+up logging output to go to a thread-local Array called 'logger-output',
+log using the 'html' formatter, and set the log level to 'debug'.
+
+This can be used to append logs to each example when the formatter
+builds the output.
 
 
 == Contributing
