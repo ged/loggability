@@ -47,3 +47,16 @@ task :coverage do
 	Rake::Task[:spec].invoke
 end
 
+# Use the fivefish formatter for docs generated from development checkout
+if File.directory?( '.hg' )
+	require 'rdoc/task'
+
+	Rake::Task[ 'docs' ].clear
+	RDoc::Task.new( 'docs' ) do |rdoc|
+	    rdoc.main = "README.rdoc"
+	    rdoc.rdoc_files.include( "*.rdoc", "ChangeLog", "lib/**/*.rb" )
+	    rdoc.generator = :fivefish
+	    rdoc.rdoc_dir = 'doc'
+	end
+end
+

@@ -6,18 +6,49 @@ require 'loggability' unless defined?( Loggability )
 
 # Some helper functions for testing. Usage:
 #
+#    # in spec_helpers.rb
 #    RSpec.configure do |c|
-#        c.include( Loggability::SpecHelpers )
+#      c.include( Loggability::SpecHelpers )
 #    end
 #
-#    describe MyClass do
-#        before( :all ) { setup_logging }
-#        after( :all ) { reset_logging }
+#    # in my_class_spec.rb; set logging level to :error
+#    describe MyClass, log: :error do
 #
-#        # ...
+#      # Except for this example, which logs at :debug
+#      it "does something", log: :debug do
+#        # anything the spec does here will be logged at :debug
+#      end
+#
+#      it "does something else" do
+#        # but this will use the :error level from the 'describe'
+#      end
 #
 #    end
+#
 module Loggability::SpecHelpers
+
+	### Inclusion callback -- install some hooks that set up logging
+	### for RSpec specs.
+	def self::included( context )
+		context.around( :each ) do |example|
+			if level = (example.metadata[:log] || example.metadata[:logging])
+				Loggability.with_level( level, &example )
+			else
+				example.run
+			end
+		end
+
+		context.before( :all ) do
+			setup_logging()
+		end
+
+		context.after( :all ) do
+			reset_logging()
+		end
+
+		super
+	end
+
 
 	### Reset the logging subsystem to its default state.
 	def reset_logging
