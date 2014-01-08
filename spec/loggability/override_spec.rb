@@ -55,7 +55,7 @@ describe Loggability::Override do
 		end
 		loghost.logger.debug "This shouldn't either."
 
-		expect( log ).to have( 1 ).log_entry
+		expect( log.size ).to eq(  1  )
 	end
 
 
@@ -80,8 +80,8 @@ describe Loggability::Override do
 		end
 		loghost.logger.debug "This should be output to the original destination"
 
-		expect( original_destination ).to have( 2 ).log_entries
-		expect( new_destination ).to have( 1 ).log_entry
+		expect( original_destination.size ).to eq(  2  )
+		expect( new_destination.size ).to eq(  1  )
 	end
 
 
@@ -108,8 +108,8 @@ describe Loggability::Override do
 
 		html_log = log.grep( /<div/ )
 
-		expect( log ).to have( 3 ).entries
-		expect( html_log ).to have( 1 ).entry
+		expect( log.size ).to eq(  3  )
+		expect( html_log.size ).to eq(  1  )
 	end
 
 
@@ -142,7 +142,7 @@ describe Loggability::Override do
 
 
 		expect( result ).to eq( :did_it )
-		expect( log ).to have( 1 ).entry
+		expect( log.size ).to eq(  1  )
 		expect( log.first ).to match( /Doing it!/ )
 	end
 

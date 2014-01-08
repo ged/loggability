@@ -178,8 +178,8 @@ describe Loggability do
 				end
 				Loggability[ @loghost ].info "After the override"
 
-				expect( @default_output ).to have( 2 ).log_entries
-				expect( tmp_output ).to have( 1 ).log_entry
+				expect( @default_output.size ).to eq(  2  )
+				expect( tmp_output.size ).to eq(  1  )
 			end
 
 
@@ -197,8 +197,8 @@ describe Loggability do
 				end
 				Loggability[ @loghost ].info "After the overrides"
 
-				expect( @default_output ).to have( 3 ).log_entries
-				expect( tmp_output ).to have( 2 ).log_entries
+				expect( @default_output.size ).to eq(  3  )
+				expect( tmp_output.size ).to eq(  2  )
 			end
 
 
@@ -209,7 +209,7 @@ describe Loggability do
 				end
 				Loggability[ @loghost ].debug "After the override"
 
-				expect( @default_output ).to have( 1 ).log_entry
+				expect( @default_output.size ).to eq(  1  )
 			end
 
 
@@ -226,7 +226,7 @@ describe Loggability do
 				end
 				Loggability[ @loghost ].debug "After the overrides"
 
-				expect( @default_output ).to have( 2 ).log_entries
+				expect( @default_output.size ).to eq(  2  )
 			end
 
 
@@ -237,8 +237,8 @@ describe Loggability do
 				end
 				Loggability[ @loghost ].info "After the override"
 
-				expect( @default_output ).to have( 3 ).log_entries
-				expect( @default_output.grep(/<div/) ).to have( 1 ).entry
+				expect( @default_output.size ).to eq(  3  )
+				expect( @default_output.grep(/<div/).size ).to eq(  1  )
 			end
 
 
@@ -255,8 +255,8 @@ describe Loggability do
 				end
 				Loggability[ @loghost ].info "After the overrides"
 
-				expect( @default_output ).to have( 5 ).log_entries
-				expect( @default_output.grep(/<div/) ).to have( 2 ).log_entries
+				expect( @default_output.size ).to eq(  5  )
+				expect( @default_output.grep(/<div/).size ).to eq(  2  )
 			end
 
 
