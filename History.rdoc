@@ -1,3 +1,14 @@
+== v0.9.0 [2014-01-08] Michael Granger <ged@FaerieMUD.org>
+
+Make the spechelpers a little more intelligent.
+
+- You no longer need to do setup_logging/reset_logging in a
+  before(:all)/after(:all) block; that's done for you.
+- You can now override the logging level for any example group by
+  adding 'logging' or 'log' metadata.
+- Fixed some documentation, added docs for the spec helpers.
+
+
 == v0.8.1 [2013-10-09] Michael Granger <ged@FaerieMUD.org>
 
 - Fix the problem with blocks not being called in chained overrides.
