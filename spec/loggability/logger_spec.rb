@@ -154,7 +154,7 @@ describe Loggability::Logger do
 			expect( @logger.logdev ).to be_a( Loggability::Logger::AppendingLogDevice )
 			@logger.level = :debug
 			@logger.info( "Something happened." )
-			expect( logmessages ).to have( 1 ).member
+			expect( logmessages.size ).to eq(  1  )
 			expect( logmessages.first ).to match( /something happened/i )
 		end
 
