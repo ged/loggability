@@ -1,3 +1,4 @@
-configurability -v2.0.2
+configurability -v2.1.1
 hoe-deveiate -v0.3.0
-simplecov -v0.7.1
+simplecov -v0.8.2
+rdoc -v4.1.0
