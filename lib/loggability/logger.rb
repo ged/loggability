@@ -185,6 +185,14 @@ class Loggability::Logger < ::Logger
 	end
 
 
+	### Rack::CommonLogger compatibility method -- append a +message+ at 'info' level.
+	def write( message )
+		unless self.logdev.nil?
+			self.add( Logger::INFO, message )
+		end
+	end
+
+
 	### Return a Hash that contains its settings suitable for restoration via
 	### #restore_settings later.
 	def settings

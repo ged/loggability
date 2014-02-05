@@ -52,6 +52,16 @@ describe Loggability::Logger do
 	end
 
 
+	it "supports #write so it can be used with Rack::CommonLogger" do
+		results = []
+		@logger.level = :debug
+		@logger.output_to( results )
+		@logger.write( "This is a written message." )
+
+		expect( results.first ).to match( /info.*this is a written message/i )
+	end
+
+
 	it "can return a Hash of its current settings" do
 		expect( @logger.settings ).to be_a( Hash )
 		expect( @logger.settings ).to include( :level, :formatter, :logdev )
