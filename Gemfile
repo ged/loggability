@@ -12,6 +12,6 @@ gem "hoe-deveiate", "~>0.4", :group => [:development, :test]
 gem "hoe-bundler", "~>1.2", :group => [:development, :test]
 gem "simplecov", "~>0.7", :group => [:development, :test]
 gem "configurability", "~>2.0", :group => [:development, :test]
-gem "hoe", "~>3.7", :group => [:development, :test]
+gem "hoe", "~>3.9", :group => [:development, :test]
 
 # vim: syntax=ruby

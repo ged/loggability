@@ -112,7 +112,9 @@ module Loggability
 		key = self.log_host_key_for( logclient )
 		key ||= GLOBAL_KEY
 
-		return self.log_hosts[ key ].logger
+		loghost = self.log_hosts[ key ] or
+			raise ArgumentError, "no log host set up for %p yet." % [ key ]
+		return loghost.logger
 	end
 
 
