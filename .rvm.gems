@@ -1,4 +1,5 @@
 configurability -v2.1.1
 hoe-deveiate -v0.3.0
+hoe-bundler -v1.2.0
 simplecov -v0.8.2
 rdoc -v4.1.0

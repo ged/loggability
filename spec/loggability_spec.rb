@@ -130,6 +130,11 @@ describe Loggability do
 			expect( Loggability[subclass] ).to be( @loghost.logger )
 		end
 
+		it "raises an exception if asked for a log host that hasn't yet been declared" do
+			logged_class = Class.new { extend Loggability; log_to :the_void }
+			expect { logged_class.log.logger }.to raise_error( ArgumentError, /no log host/i )
+		end
+
 	end
 
 
