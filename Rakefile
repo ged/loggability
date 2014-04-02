@@ -8,6 +8,8 @@ rescue LoadError
 	abort "This Rakefile requires 'hoe' (gem install hoe)"
 end
 
+GEMSPEC = 'loggability.gemspec'
+
 Hoe.plugin :mercurial
 Hoe.plugin :signing
 Hoe.plugin :deveiate
@@ -59,4 +61,16 @@ if File.directory?( '.hg' )
 	    rdoc.rdoc_dir = 'doc'
 	end
 end
+
+task :gemspec => GEMSPEC
+file GEMSPEC => __FILE__ do |task|
+	spec = $hoespec.spec
+	spec.files.delete( '.gemtest' )
+	spec.version = "#{spec.version}.pre#{Time.now.strftime("%Y%m%d%H%M%S")}"
+	File.open( task.name, 'w' ) do |fh|
+		fh.write( spec.to_ruby )
+	end
+end
+
+task :default => :gemspec
 

@@ -55,7 +55,7 @@ describe Loggability::Override do
 		end
 		loghost.logger.debug "This shouldn't either."
 
-		expect( log.size ).to eq(  1  )
+		expect( log.size ).to eq( 1 )
 	end
 
 
