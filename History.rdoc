@@ -1,3 +1,12 @@
+== v0.11.0 [2014-04-02] Michael Granger <ged@FaerieMUD.org>
+
+Fix a bug when a log host is subclassed.
+
+- Inheriting a log host now registers the subclass as its own log host.
+- Add a gemspec-building task.
+- Eliminated the last vestiges of deprecated RSpec syntax.
+
+
 == v0.10.1 [2014-03-24] Michael Granger <ged@FaerieMUD.org>
 
 Bugfix: Raise an exception when something attempts to use a non-existant
