@@ -150,6 +150,7 @@ class Loggability::Logger < ::Logger
 		self.level = if $DEBUG then :debug else :warn end
 		self.output_to( logdev, *args )
 
+		@created_from = caller( 3 ).first
 		@default_formatter = Loggability::Formatter.create( :default )
 	end
 
@@ -157,6 +158,11 @@ class Loggability::Logger < ::Logger
 	######
 	public
 	######
+
+	##
+	# The line that caused this logger to be created.
+	attr_reader :created_from
+
 
 	### Return a human-readable representation of the object suitable for debugging.
 	def inspect

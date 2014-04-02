@@ -22,13 +22,14 @@ describe Loggability::Formatter::Color do
 		ENV['TERM'] = @original_term
 	end
 
-	before( :each ) do
-		@formatter = described_class.new
-	end
+
+	let( :formatter ) { described_class.new }
+
 
 	it "formats messages with ANSI color" do
-		@formatter.call( 'INFO', Time.at(1336286481), nil, "Foom." ).
-			should include( "-- \e[37mFoom.\e[0m\n" )
+		expect(
+			formatter.call( 'INFO', Time.at(1336286481), nil, "Foom." )
+		).to include( "-- \e[37mFoom.\e[0m\n" )
 	end
 
 end
