@@ -6,4 +6,3 @@ ChangeLog
 ^\.rbx/
 \.rbx/
 \.lock$
-^loggability\.gemspec$
