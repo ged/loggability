@@ -76,13 +76,13 @@ class Loggability::Formatter
 	def call( severity, time, progname, message )
 		timeformat = self.datetime_format
 		args = [
-			time.strftime( timeformat ),                                  # %1$s
-			time.usec,                                                    # %2$d
-			Process.pid,                                                  # %3$d
-			Thread.current == Thread.main ? 'main' : Thread.object_id,    # %4$s
-			severity.downcase,                                            # %5$s
-			progname,                                                     # %6$s
-			self.msg2str(message, severity)                               # %7$s
+			time.strftime( timeformat ),                                       # %1$s
+			time.usec,                                                         # %2$d
+			Process.pid,                                                       # %3$d
+			Thread.current == Thread.main ? 'main' : Thread.current.object_id, # %4$s
+			severity.downcase,                                                 # %5$s
+			progname,                                                          # %6$s
+			self.msg2str(message, severity)                                    # %7$s
 		]
 
 		return self.format % args
