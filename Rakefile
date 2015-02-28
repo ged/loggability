@@ -13,7 +13,6 @@ GEMSPEC = 'loggability.gemspec'
 Hoe.plugin :mercurial
 Hoe.plugin :signing
 Hoe.plugin :deveiate
-Hoe.plugin :bundler
 
 Hoe.plugins.delete :rubyforge
 
@@ -40,7 +39,7 @@ end
 ENV['VERSION'] ||= hoespec.spec.version.to_s
 
 # Ensure the specs pass before checking in
-task 'hg:precheckin' => [ :check_history, 'bundler:gemfile', :check_manifest, :spec ]
+task 'hg:precheckin' => [ :check_history, :check_manifest, :gemspec, :spec ]
 
 
 desc "Build a coverage report"
@@ -48,6 +47,8 @@ task :coverage do
 	ENV["COVERAGE"] = 'yes'
 	Rake::Task[:spec].invoke
 end
+CLOBBER.include( 'coverage' )
+
 
 # Use the fivefish formatter for docs generated from development checkout
 if File.directory?( '.hg' )
@@ -63,14 +64,15 @@ if File.directory?( '.hg' )
 end
 
 task :gemspec => GEMSPEC
-file GEMSPEC => __FILE__ do |task|
+file GEMSPEC => __FILE__
+task GEMSPEC do |task|
 	spec = $hoespec.spec
 	spec.files.delete( '.gemtest' )
-	spec.version = "#{spec.version}.pre#{Time.now.strftime("%Y%m%d%H%M%S")}"
+	spec.version = "#{spec.version.bump}.0.pre#{Time.now.strftime("%Y%m%d%H%M%S")}"
 	File.open( task.name, 'w' ) do |fh|
 		fh.write( spec.to_ruby )
 	end
 end
 
-task :default => :gemspec
+CLOBBER.include( GEMSPEC.to_s )
 
