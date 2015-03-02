@@ -59,6 +59,7 @@ if File.directory?( '.hg' )
 	    rdoc.main = "README.rdoc"
 	    rdoc.rdoc_files.include( "*.rdoc", "ChangeLog", "lib/**/*.rb" )
 	    rdoc.generator = :fivefish
+		rdoc.title = 'Loggability'
 	    rdoc.rdoc_dir = 'doc'
 	end
 end
