@@ -28,8 +28,15 @@ module Loggability::LogClient
 	end
 
 
-	# Stuff that gets added to instances of Classes that are log hosts.
+	# Stuff that gets added to instances of Classes that are log clients.
 	module InstanceMethods
+
+		### Unset the logger proxy for copies of the logged object.
+		def initialize_copy( other )
+			super
+			@__log = nil
+		end
+
 
 		### Fetch the key of the log host the instance of this client targets
 		def log_host_key
