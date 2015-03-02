@@ -119,6 +119,12 @@ describe Loggability do
 		end
 
 
+		it "creates a new log proxy when duped" do
+			obj = @class.new
+			expect( obj.log ).to_not be( obj.dup.log )
+		end
+
+
 		it "is associated with its log host's logger via its instances through the Loggability module" do
 			obj = @class.new
 			expect( Loggability[obj] ).to be( @loghost.logger )

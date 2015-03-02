@@ -1,3 +1,4 @@
+.simplecov
 ChangeLog
 History.rdoc
 Manifest.txt
