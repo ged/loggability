@@ -52,6 +52,11 @@ module Loggability
 	class << self; attr_reader :log_hosts; end
 	@log_hosts = {}
 
+	##
+	# The last logging configuration that was installed
+	class << self; attr_accessor :config; end
+	@config = CONFIG_DEFAULTS.dup
+
 
 	# Automatically log the log host and log client mixins when they're referenced
 	autoload :LogHost, 'loggability/loghost'
@@ -87,6 +92,9 @@ module Loggability
 
 		self.logger.debug "Registering %p log host: %p" % [ key, host ] if self.logger
 		self.log_hosts[ key ] = host
+		if (( logspec = self.config[key] ))
+			self.apply_config( host.logger, logspec )
+		end
 	end
 
 
@@ -275,17 +283,16 @@ module Loggability
 	#
 
 	### Configurability API -- configure logging.
-	def self::configure( config=nil )
-		if config
+	def self::configure( new_config=nil )
+		if new_config
+			self.config = new_config
+
 			self.log.debug "Configuring Loggability with custom config."
-			confighash = config.to_hash
+			confighash = new_config.to_hash
 
 			# Set up all loggers with defaults first
 			if defaultspec = confighash.delete( :__default__ ) || confighash.delete( '__default__' )
-				level, format, target = self.parse_config_spec( defaultspec )
-				Loggability.level = level if level
-				Loggability.format_as( format ) if format
-				Loggability.output_to( target ) if target
+				self.apply_config( self, defaultspec )
 			end
 
 			# Then let individual configs override.
@@ -296,14 +303,21 @@ module Loggability
 				end
 
 				self.log.debug "  configuring logger for %p: %s" % [ key, logspec ]
-				level, format, target = self.parse_config_spec( logspec )
-				Loggability[ key ].level = level if level
-				Loggability[ key ].format_with( format ) if format
-				Loggability[ key ].output_to( target ) if target
+				self.apply_config( Loggability[key], logspec )
 			end
 		else
 			self.log.debug "Configuring Loggability with defaults."
 		end
+	end
+
+
+	### Configure the specified +logger+ (or anything that ducktypes the same) with the
+	### configuration specified by +logspec+.
+	def self::apply_config( logger, logspec )
+		level, format, target = self.parse_config_spec( logspec )
+		logger.level = level if level
+		logger.format_with( format ) if format
+		logger.output_to( target ) if target
 	end
 
 

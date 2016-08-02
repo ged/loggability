@@ -9,15 +9,6 @@ require 'loggability/logger'
 
 describe Loggability do
 
-	before( :each ) do
-		setup_logging( :fatal )
-	end
-
-	after( :each ) do
-		reset_logging()
-	end
-
-
 	it "is itself a log host for the global logger" do
 		expect( described_class.logger ).to be_a( Loggability::Logger )
 		expect( described_class.log_hosts ).to include( Loggability::GLOBAL_KEY => Loggability )
@@ -378,6 +369,14 @@ describe Loggability do
 			expect {
 				Loggability.configure( 'class1' => 'debug (mindwaves)' )
 			}.to raise_error( LoadError, /cannot load such file/i )
+		end
+
+		it "installs the last-loaded configuration to loggers when they are registered" do
+			Loggability.configure( __default__: 'warn', late_class: 'debug (color)' )
+			late_class = Class.new { extend Loggability; log_as :late_class }
+
+			expect( late_class.logger.level ).to eq( :debug )
+			expect( late_class.logger.formatter ).to be_a( Loggability::Formatter::Color )
 		end
 
 	end
