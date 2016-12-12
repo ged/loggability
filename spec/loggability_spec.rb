@@ -9,6 +9,12 @@ require 'loggability/logger'
 
 describe Loggability do
 
+	before( :each ) do
+		Loggability.reset
+		Loggability.configure
+	end
+
+
 	it "is itself a log host for the global logger" do
 		expect( described_class.logger ).to be_a( Loggability::Logger )
 		expect( described_class.log_hosts ).to include( Loggability::GLOBAL_KEY => Loggability )
@@ -37,7 +43,7 @@ describe Loggability do
 		end
 
 		after( :each ) do
-			Loggability.clear_loghosts
+			Loggability.reset
 		end
 
 
@@ -92,7 +98,7 @@ describe Loggability do
 		end
 
 		after( :each ) do
-			Loggability.clear_loghosts
+			Loggability.reset
 		end
 
 
@@ -138,7 +144,7 @@ describe Loggability do
 	context "aggregate methods" do
 
 		before( :each ) do
-			Loggability.clear_loghosts
+			Loggability.reset
 			@loghost = Class.new do
 				extend Loggability
 				log_as :testing
@@ -371,12 +377,20 @@ describe Loggability do
 			}.to raise_error( LoadError, /cannot load such file/i )
 		end
 
-		it "installs the last-loaded configuration to loggers when they are registered" do
+		it "applies the last-loaded configuration to loggers when they are registered" do
 			Loggability.configure( __default__: 'warn', late_class: 'debug (color)' )
 			late_class = Class.new { extend Loggability; log_as :late_class }
 
 			expect( late_class.logger.level ).to eq( :debug )
 			expect( late_class.logger.formatter ).to be_a( Loggability::Formatter::Color )
+		end
+
+		it "applies the config defaults to loggers when they are registered" do
+			Loggability.configure( __default__: 'error' )
+			late_class = Class.new { def name; "TheTestClass"; end; extend Loggability; log_as :late_class }
+
+			expect( late_class.logger.level ).to eq( :error )
+			expect( late_class.logger.formatter ).to be_a( Loggability::Formatter::Default )
 		end
 
 	end

@@ -12,7 +12,7 @@ require 'loggability/override'
 describe Loggability::Override do
 
 	after( :each ) do
-		Loggability.clear_loghosts
+		Loggability.reset
 	end
 
 
