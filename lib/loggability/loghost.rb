@@ -36,12 +36,6 @@ module Loggability::LogHost
 	alias_method :log=, :logger=
 
 
-	### Register subclasses of log hosts as their own log hosts.
-	def inherited( subclass )
-		super
-		Loggability.register_loghost( subclass )
-	end
-
 end # module Loggability::LogHost
 
 
