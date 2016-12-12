@@ -23,7 +23,7 @@ module Loggability
 	# Configuration defaults
 	CONFIG_DEFAULTS = {
 		:__default__ => 'warn STDERR',
-	}
+	}.freeze
 
 	# Regexp for parsing logspec lines in the config
 	LOGSPEC_PATTERN = %r{
@@ -55,7 +55,7 @@ module Loggability
 	##
 	# The last logging configuration that was installed
 	class << self; attr_accessor :config; end
-	@config = CONFIG_DEFAULTS.dup
+	@config = CONFIG_DEFAULTS.dup.freeze
 
 
 	# Automatically log the log host and log client mixins when they're referenced
@@ -86,14 +86,19 @@ module Loggability
 	def self::register_loghost( host )
 		key = host.log_host_key
 		if self.log_hosts.key?( key )
+			# raise "Can't set a log host for nil" if key.nil?
 			self.logger.warn "Replacing existing log host for %p (%p) with %p" %
 				[ key, self.log_hosts[key], host ]
 		end
 
-		self.logger.debug "Registering %p log host: %p" % [ key, host ] if self.logger
+		#self.logger.debug "Registering %p log host: %p" % [ key, host ] if self.logger
 		self.log_hosts[ key ] = host
-		if (( logspec = self.config[key] ))
+		if (( logspec = Loggability.config[key] ))
 			self.apply_config( host.logger, logspec )
+		elsif (( defaultspec = (Loggability.config[:__default__] || Loggability.config['__default__']) ))
+			self.apply_config( host.logger, defaultspec )
+		else
+			self.apply_config( host.logger, CONFIG_DEFAULTS[:__default__] )
 		end
 	end
 
@@ -126,10 +131,12 @@ module Loggability
 	end
 
 
-	### Clear out all log hosts except for ones which start with '_'. This is intended
-	### to be used for testing.
-	def self::clear_loghosts
-		self.log_hosts.delete_if {|key,_| !key.to_s.start_with?('_') }
+	### Clear out all registered log hosts and reset the default logger. This is
+	### mostly intended for facilitating tests.
+	def self::reset
+		self.log_hosts.clear
+		self.logger = self.default_logger = Loggability::Logger.new
+		Loggability.register_loghost( self )
 	end
 
 
@@ -271,45 +278,10 @@ module Loggability
 	end
 
 
-	# Install a global logger in Loggability itself
-	extend( Loggability::LogHost )
-	self.log_host_key = GLOBAL_KEY
-	self.logger = self.default_logger = Loggability::Logger.new
-	Loggability.register_loghost( self )
-
 
 	#
 	# :section: Configurability Support
 	#
-
-	### Configurability API -- configure logging.
-	def self::configure( new_config=nil )
-		if new_config
-			self.config = new_config
-
-			self.log.debug "Configuring Loggability with custom config."
-			confighash = new_config.to_hash
-
-			# Set up all loggers with defaults first
-			if defaultspec = confighash.delete( :__default__ ) || confighash.delete( '__default__' )
-				self.apply_config( self, defaultspec )
-			end
-
-			# Then let individual configs override.
-			confighash.each do |key, logspec|
-				unless Loggability.log_host?( key )
-					self.log.debug "  no such log host %p; skipping" % [ key ]
-					next
-				end
-
-				self.log.debug "  configuring logger for %p: %s" % [ key, logspec ]
-				self.apply_config( Loggability[key], logspec )
-			end
-		else
-			self.log.debug "Configuring Loggability with defaults."
-		end
-	end
-
 
 	### Configure the specified +logger+ (or anything that ducktypes the same) with the
 	### configuration specified by +logspec+.
@@ -325,7 +297,7 @@ module Loggability
 	def self::parse_config_spec( spec )
 		match = LOGSPEC_PATTERN.match( spec ) or
 			raise ArgumentError, "Couldn't parse logspec: %p" % [ spec ]
-		self.log.debug "  parsed config spec %p -> %p" % [ spec, match ]
+		# self.log.debug "  parsed config spec %p -> %p" % [ spec, match ]
 		severity, target, format = match.captures
 
 		target = case target
@@ -336,6 +308,40 @@ module Loggability
 			end
 
 		return severity, format, target
+	end
+
+
+	# Install a global logger in Loggability itself
+	extend( Loggability::LogHost )
+	self.log_host_key = GLOBAL_KEY
+	self.logger = self.default_logger = Loggability::Logger.new
+	Loggability.register_loghost( self )
+
+
+	### Configurability API -- configure logging.
+	def self::configure( new_config=nil )
+		if new_config
+			self.config = new_config.dup.freeze
+			confighash = new_config.to_hash
+
+			# Set up all loggers with defaults first
+			if defaultspec = confighash.delete( :__default__ ) || confighash.delete( '__default__' )
+				self.apply_config( self, defaultspec )
+			end
+
+			# Then let individual configs override.
+			confighash.each do |key, logspec|
+				unless Loggability.log_host?( key )
+					self.log.debug "  no such log host %p; skipping" % [ key ]
+					next
+				end
+
+				# self.log.debug "  configuring logger for %p: %s" % [ key, logspec ]
+				self.apply_config( Loggability[key], logspec )
+			end
+		else
+			self.config = self.defaults.dup.freeze
+		end
 	end
 
 
