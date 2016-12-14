@@ -20,6 +20,7 @@ spec/loggability/formatter/color_spec.rb
 spec/loggability/formatter/html_spec.rb
 spec/loggability/formatter_spec.rb
 spec/loggability/logger_spec.rb
+spec/loggability/loghost_spec.rb
 spec/loggability/override_spec.rb
 spec/loggability/spechelpers_spec.rb
 spec/loggability_spec.rb

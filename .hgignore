@@ -6,3 +6,4 @@ ChangeLog
 ^\.rbx/
 \.rbx/
 \.lock$
+\.gem$

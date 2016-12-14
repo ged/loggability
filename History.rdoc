@@ -1,3 +1,14 @@
+== v0.12.0 [2016-12-12] Michael Granger <ged@FaerieMUD.org>
+
+Bugfixes:
+
+- Don't make classes that inherit loghosts their own loghosts
+- Fix configuration so it's applied more consistently
+- Post-configure log hosts created after config is loaded
+- Clear the log proxy for duped/cloned log clients
+- Use the current thread's object ID in the log message and not the Thread class's
+
+
 == v0.11.0 [2014-04-02] Michael Granger <ged@FaerieMUD.org>
 
 Fix a bug when a log host is subclassed.
