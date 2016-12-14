@@ -65,13 +65,15 @@ if File.directory?( '.hg' )
 end
 
 task :gemspec => GEMSPEC
-file GEMSPEC => __FILE__
+file GEMSPEC => [ __FILE__, 'lib/loggability.rb' ]
 task GEMSPEC do |task|
-	spec = $hoespec.spec
-	spec.files.delete( '.gemtest' )
-	spec.version = "#{spec.version.bump}.0.pre#{Time.now.strftime("%Y%m%d%H%M%S")}"
+	hoespec = $hoespec.spec
+	hoespec.files.delete( '.gemtest' )
+	hoespec.signing_key = nil
+	hoespec.version = "#{hoespec.version.bump}.0.pre#{Time.now.strftime("%Y%m%d%H%M%S")}"
+	hoespec.cert_chain = [ 'certs/ged.pem' ]
 	File.open( task.name, 'w' ) do |fh|
-		fh.write( spec.to_ruby )
+		fh.write( hoespec.to_ruby )
 	end
 end
 
