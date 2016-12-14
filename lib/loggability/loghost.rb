@@ -36,6 +36,12 @@ module Loggability::LogHost
 	alias_method :log=, :logger=
 
 
+	### Make subclasses log clients of the loghost.
+	def inherited( subclass )
+		super
+		subclass.log_to( self )
+	end
+
 end # module Loggability::LogHost
 
 
