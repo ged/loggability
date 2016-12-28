@@ -1,0 +1,337 @@
+# loggability
+
+
+## Description
+
+A composable logging system built on the standard Logger library.
+
+You can add Loggability to large libraries and systems, then hook everything
+up later when you know where you want logs to be written, at what level of
+severity, and in which format.
+
+An example:
+
+    # Load a bunch of libraries that use Loggability
+    require 'strelka'
+    require 'inversion'
+    require 'treequel'
+    require 'loggability'
+    
+    # Set up our own library
+    module MyProject
+        extend Loggability
+        log_as :my_project
+    
+        class Server
+            extend Loggability
+            log_to :my_project
+    
+            def initialize
+                self.log.debug "Listening."
+            end
+        end
+    
+    end
+    
+    # Now tell everything that's using Loggability to log to an HTML
+    # log file at INFO level
+    Loggability.write_to( '/usr/local/www/htdocs/log.html' )
+    Loggability.format_as( :html )
+    Loggability.level = :info
+
+
+## Prerequisites
+
+* Ruby 1.9.3 or better, Rubinius 2.0 or better
+
+It will probably work under any other interpreter in which Logger works, but
+it's only tested in the above.
+
+
+## Installation
+
+    $ gem install loggability
+
+
+## Usage
+
+Loggability is split up into two parts: {log hosts}[rdoc-ref:Loggability::LogHost]
+and {log clients}[rdoc-ref:Loggability::LogClient]. A <b>log
+host</b> is an object that contains a Logger instance that will be used to
+log stuff. A <b>log client</b> is an object that will write logging messages to a
+particular <b>log host</b>'s Logger.
+
+Both parts require that you extend the object with Loggability.
+
+### Setting Up A 'Log Host'
+
+To install a Logger into an object, you use the +log_as+ declaration with a
+Symbol that will be used as the key for the object's Logger:
+
+    module MyProject
+        extend Loggability
+        log_as :my_project
+    end
+
+After declaring itself as a log host, it will have an associated Loggability::Logger
+object that's a wrapper around a Logger instance:
+
+    MyProject.logger
+    # => #<Loggability::Logger:0x4e0c :my_project ...>
+
+Since it's still a Logger object, you can call all the regular Logger methods:
+
+    MyProject.logger.level = Logger::WARN
+
+    MyProject.logger.debug("Created logger")
+    MyProject.logger.info("Program started")
+    MyProject.logger.warn("Nothing to do!")
+
+    begin
+        File.each_line(path) do |line|
+            unless line =~ /^(\w+) = (.*)$/
+                MyProject.logger.error("Line in wrong format: #{line}")
+            end
+        end
+    rescue => err
+        MyProject.logger.fatal("Caught exception; exiting")
+        MyProject.logger.fatal(err)
+    end
+
+or use a few new convenience methods for changing the logging level:
+
+    MyProject.logger.level = :debug
+
+...installing a different formatter:
+
+    MyProject.logger.format_as( :html )
+
+...changing the output destination:
+
+    log_messages = []
+    MyProject.logger.output_to( log_messages )
+
+...{and more}[rdoc-ref:Loggability::Logger].
+
+
+### Setting Up A 'Log Client'
+
+To add an object that will log to your log host, after you <tt>extend Loggability</tt>,
+use the +log_to+ declaration to hook up the object (and instances of the object if
+you use +log_to+ in a Class) to the log host you specify:
+
+    class MyProject::Server
+        extend Loggability
+        log_to :my_project
+
+        def initialize( config={} )
+            self.log.debug "Creating a server with config: %p" % [ config ]
+            #...
+        end
+    end
+
+You can fetch any object's Logger through the Loggability object:
+
+    Loggability[ MyProject ]
+    # => #<Loggability::Logger:0x007f88ca3bf510 ...>
+
+    Loggability[ MyProject::Server ]
+    # => #<Loggability::Logger:0x007f88ca3bf510 ...>
+
+Calling the object's <tt>#log</tt> method will return a Proxy for its host's Logger object that will include the object's name in the log messages 'progname'.
+
+You can also use the <b>log host</b> itself as the argument to +log_to+:
+
+    class MyProject::Client
+        extend Loggability
+        log_to MyProject
+    end
+
+
+### Aggregate Logging
+
+If you have several <b>log hosts</b>, and you want to affect them all simultaneously,
+you can do that using the aggregate functions of Loggability. They're the same as the
+methods on Loggability::Logger:
+
+    # Set all logs to log at INFO level
+    Loggability.level = :info
+    
+    # Write HTML logs
+    Loggability.format_with( :html )
+    
+    # Log everything to the same logfile
+    Loggability.output_to( "/tmp/my_project_log.html" )
+
+
+### Temporarily Overriding Logging  Behavior
+
+Sometimes you want to log one particular chunk of code at a different
+level, or to a different destination, and then restore everything back
+to the way it was afterwards.
+
+Loggability has a few ways of doing that:
+
+    # Log only fatal errors...
+    Loggability.with_level( :fatal ) do
+        ...
+    end
+
+    # Log everything to an array for the block
+    logs = []
+    Loggability.outputting_to( logs ) do
+        ...
+    end
+    
+    # Log using the HTML formatter
+    Loggability.formatted_with( :html ) do
+        ...
+    end
+
+    # Or chain them together:
+    Loggability.with_level( :debug ).outputting_to( $stderr ).formatted_with( :color ) do
+        Client.connect!
+    end
+
+
+### Configurability
+
+Loggability has support for the Configurability[https://rubygems.org/gems/configurability]
+library, which does the same thing for configuration that Loggability does for
+logging.
+
+You can configure all registered loggers from the 'logging' section of the config:
+
+    logging:
+      __default__: warn STDERR
+      mongrel2: info STDOUT (html)
+      strelka: debug (html)
+      inversion: error /var/log/templating.log (default)
+
+The format of the value of each logger is:
+
+    SEVERITY [TARGET] [(FORMAT)]
+
+where:
+
+[+SEVERITY+]
+  The log level; one of: +debug+, +info+, +warn+, +error+, or +fatal+
+[+TARGET+]
+  The destination for log messages. This can be the path to a log file, or
+  one of <tt>'STDOUT'</tt> or <tt>'STDERR'</tt>, which get mapped to the
+  equivalent filehandle. Optional.
+[+FORMAT+]
+  The name of one of the formatters. Loggability comes with +default+ (plaintext),
+  +color+ (ANSI colored text), and +html+ formatters. Optional.
+
+If the special key <tt>__default__</tt> is included, its config will be used to set
+global defaults before the individual configs are applied.
+
+If either of the optional values is unspecified, it is left unchanged from what it
+was before configuration.
+
+
+### RSpec Helpers
+
+Loggability includes a couple of helper functions for RSpec that allow you to control
+log levels for particular specs.
+
+To use it, require <tt>loggability/spechelpers</tt> in your specs (we put it in the 
+spec helpers file) and then include the helpers from your RSpec config:
+
+  require 'loggability/spechelpers'
+  RSpec.configure do |c|
+    # ...
+    c.include( Loggability::SpecHelpers )
+  end
+
+This will install a before and after `:all` hook to set the logging levels before each
+example group and then reset it before moving on to the next group.
+
+You can also access the bodies of those hooks manually:
+
+  setup_logging( level=:fatal )
+  reset_logging()
+
+The helpers also allow you to set logging levels for a whole example group, for
+particular contexts, or even for individual examples using RSpec's metadata hash
+syntax:
+
+  # Set logging to 'error' level for each example in this group
+  describe MyClass, logging: :error do
+  
+    # ...but for examples in this context, set it to 'fatal'
+    context 'created with a target', log: :fatal do
+    
+      # ...except for this one, which logs at 'debug' level
+      it "does something to it", logging: :debug do
+      
+      end
+    
+      it "does some other stuff, too"
+    
+    end
+  
+  end
+
+The {setup_logging}[rdoc-ref:Loggability::SpecHelpers.setup_logging] helper
+also provides support for displaying the logs inline with spec formatters for
+which outputting the logs to STDERR isn't optimal. The only one that's
+currently uses it is the 
+{'webkit' formatter}[https://rubygems.org/gems/rspec-formatter-webkit], but
+it should be easy to adapt to other HTML displays as well.
+
+It looks for either an +HTML_LOGGING+ environment variable, or for the
++TM_FILENAME+ variable to be set to a filename that ends with '_spec.rb'
+(for Textmate's rspec runner). In either of those conditions, it will set
+up logging output to go to a thread-local Array called 'logger-output',
+log using the 'html' formatter, and set the log level to 'debug'.
+
+This can be used to append logs to each example when the formatter
+builds the output.
+
+
+## Contributing
+
+You can check out the current development source with
+Mercurial[http://bitbucket.org/ged/loggability], or if you prefer Git, via
+{its Github mirror}[https://github.com/ged/loggability].
+
+After checking out the source, run:
+
+    $ rake newb
+
+This task will install any missing dependencies, run the tests/specs,
+and generate the API documentation.
+
+
+## License
+
+Copyright (c) 2012-2016, Michael Granger
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+* Redistributions of source code must retain the above copyright notice,
+  this list of conditions and the following disclaimer.
+
+* Redistributions in binary form must reproduce the above copyright notice,
+  this list of conditions and the following disclaimer in the documentation
+  and/or other materials provided with the distribution.
+
+* Neither the name of the author/s, nor the names of the project's
+  contributors may be used to endorse or promote products derived from this
+  software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE
+FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
