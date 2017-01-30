@@ -23,6 +23,12 @@ describe Loggability::Override do
 			log_as :testing
 		end
 	end
+	let!( :another_loghost ) do
+		Class.new do
+			extend Loggability
+			log_as :testing_another
+		end
+	end
 
 
 	it "doesn't override anything by default" do
@@ -85,6 +91,87 @@ describe Loggability::Override do
 	end
 
 
+	it "can mutate itself to only affect a subset of log hosts" do
+		log = []
+
+		Loggability.level = :info
+		Loggability.output_to( log )
+		Loggability.format_with( :default )
+
+		loghost_override = override.for_logger( another_loghost ).with_level( :debug )
+
+		another_loghost.logger.debug "This shouldn't show up."
+		loghost.logger.debug "This also shouldn't show up."
+		loghost_override.call do
+			loghost.logger.debug "And this also should not show up."
+			another_loghost.logger.debug "But this should."
+		end
+		loghost.logger.debug "This shouldn't show up either."
+		another_loghost.logger.debug "And neither should this."
+
+		expect( log.size ).to eq( 1 )
+	end
+
+
+	it "can affect a subset of more than one log host" do
+		log = []
+
+		Loggability.level = :info
+		Loggability.output_to( log )
+		Loggability.format_with( :default )
+
+		loghost_override = override.for_logger( loghost, another_loghost ).with_level( :debug )
+
+		another_loghost.logger.debug "This shouldn't show up."
+		loghost.logger.debug "This also shouldn't show up."
+		loghost_override.call do
+			loghost.logger.debug "Now this one should show up."
+			another_loghost.logger.debug "And so should this."
+		end
+		loghost.logger.debug "This shouldn't show up though."
+		another_loghost.logger.debug "And neither should this."
+
+		expect( log.size ).to eq( 2 )
+	end
+
+
+	it "works when mutating log hosts by log clients as well" do
+		log = []
+
+		Loggability.level = :info
+		Loggability.output_to( log )
+		Loggability.format_with( :default )
+
+		logclient = Class.new do
+			extend Loggability
+			log_to :testing
+		end
+
+		loghost_override = override.for_logger( logclient ).with_level( :debug )
+
+		another_loghost.logger.debug "This shouldn't show up."
+		loghost.logger.debug "This also shouldn't show up."
+		logclient.log.debug "And neither should this."
+		loghost_override.call do
+			another_loghost.logger.debug "And this also should not show up."
+			loghost.logger.debug "But this should since it's using the same logger as the client."
+			logclient.log.debug "And this one should too."
+		end
+		loghost.logger.debug "And now this shouldn't show up."
+		another_loghost.logger.debug "And neither should this."
+		logclient.log.debug "Nor this."
+
+		expect( log.size ).to eq( 2 )
+	end
+
+
+	it "errors if for_logger is called with no loggers" do
+		expect {
+			override.for_logger
+		}.to raise_error( ArgumentError, /no log hosts given/i )
+	end
+
+
 	it "has a constructor delegator for its output mutator" do
 		log = []
 		override = described_class.outputting_to( log )
@@ -130,6 +217,7 @@ describe Loggability::Override do
 		expect( override.settings[:level] ).to be( :debug )
 	end
 
+
 	it "executes a block passed to a mutator with the mutated override" do
 		Loggability.level = :info
 		Loggability.format_with( :default )
@@ -139,7 +227,6 @@ describe Loggability::Override do
 			Loggability[ loghost ].debug "Doing it!"
 			:did_it
 		end
-
 
 		expect( result ).to eq( :did_it )
 		expect( log.size ).to eq(  1  )

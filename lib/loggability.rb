@@ -113,6 +113,19 @@ module Loggability
 	end
 
 
+	### Return the log host for +object+, if any. Raises an ArgumentError if the +object+
+	### doesn't have an associated log host.
+	def self::log_host_for( object )
+		key = self.log_host_key_for( object )
+		key ||= GLOBAL_KEY
+
+		loghost = self.log_hosts[ key ] or
+			raise ArgumentError, "no log host set up for %p yet." % [ key ]
+
+		return loghost
+	end
+
+
 	### Returns +true+ if there is a log host associated with the given +object+.
 	def self::log_host?( object )
 		key = self.log_host_key_for( object ) or return false
@@ -122,11 +135,7 @@ module Loggability
 
 	### Return the Loggability::Logger for the loghost associated with +logclient+.
 	def self::[]( logclient )
-		key = self.log_host_key_for( logclient )
-		key ||= GLOBAL_KEY
-
-		loghost = self.log_hosts[ key ] or
-			raise ArgumentError, "no log host set up for %p yet." % [ key ]
+		loghost = self.log_host_for( logclient )
 		return loghost.logger
 	end
 
@@ -244,6 +253,26 @@ module Loggability
 		else
 			return override
 		end
+	end
+
+
+	### Aggregate method: override one or more settings for the duration of the +block+ for
+	### only the given +hosts+. If no +block+ is given returns a
+	### Loggability::Override object that will override the specified log hosts whenever its
+	### +#call+ method is called.
+	def self::for_logger( *hosts, &block )
+		override = Loggability::Override.for_logger( *hosts )
+
+		if block
+			return override.call( &block )
+		else
+			return override
+		end
+	end
+	class << self
+		alias_method :for_loggers, :for_logger
+		alias_method :for_log_host, :for_logger
+		alias_method :for_log_hosts, :for_logger
 	end
 
 

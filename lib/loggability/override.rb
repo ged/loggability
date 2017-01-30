@@ -43,6 +43,14 @@ class Loggability::Override
 	end
 
 
+	### Set up an Override that will only apply to the specified +log_hosts+. If called
+	### with a +block+, call #call immediately on the Override with the block and return
+	## the result of that instead.
+	def self::for_logger( *log_hosts, &block )
+		return self.new( log_hosts: log_hosts, &block )
+	end
+
+
 	### Create a new Override with the specified +settings+ that will be applied
 	### during a call to #call, and then reverted when #call returns. Valid +settings+
 	### are:
@@ -51,22 +59,26 @@ class Loggability::Override
 	###   Set the level of all Loggers to the value.
 	### [:logdev]
 	###   Set the destination log device of all Loggers to the value.
+	### [:log_hosts]
+	###   Set the affected log hosts to the value.
 	### [:formatter]
 	###   Set the formatter for all Loggers to the value (a Loggability::Formatter).
 	###
 	def initialize( settings={} )
 		super()
 
+		@log_hosts = settings.delete( :log_hosts )
 		@settings = settings
-		@overridden_settings = {}
+		@overridden_settings = nil
 	end
 
 
 	### Copy constructor -- make copies of the internal data structures
 	### when duplicated.
 	def initialize_copy( original )
+		@log_hosts = original.log_hosts.dup if original.log_hosts
 		@settings = original.settings.dup
-		@overridden_settings = {}
+		@overridden_settings = nil
 	end
 
 
@@ -74,13 +86,20 @@ class Loggability::Override
 	public
 	######
 
+	##
 	# The Override's settings Hash (the settings that will be applied during
 	# an overridden #call).
 	attr_reader :settings
 
+	##
 	# The original settings preserved by the Override during a call to #call,
 	# keyed by the logger they belong to.
-	attr_reader :overridden_settings
+	attr_accessor :overridden_settings
+
+	##
+	# The log hosts the Override will be applied to during an overridden
+	# #call. If this is +nil+, all log hosts will be affected.
+	attr_accessor :log_hosts
 
 
 	### Call the provided block with configured overrides applied, and then restore
@@ -118,14 +137,24 @@ class Loggability::Override
 	end
 
 
+	### Return a clone of the receiving Override with its log hosts set to +hosts+
+	### (instead of affecting all registered log hosts)
+	def for_logger( *hosts, &block )
+		raise ArgumentError, "no log hosts given" if hosts.empty?
+		return self.clone_with( log_hosts: hosts, &block )
+	end
+	alias_method :for_loggers, :for_logger
+
+
 	### Return the object as a human-readable string suitable for debugging.
 	def inspect
-		return "#<%p:%#016x formatter: %s, level: %s, output: %s>" % [
+		return "#<%p:%#016x formatter: %s, level: %s, output: %s, affecting %s log hosts>" % [
 			self.class,
 			self.object_id * 2,
 			self.settings[:formatter] || '-',
 			self.settings[:level] || '-',
 			self.settings[:logdev] ? self.settings[:logdev].class : '-',
+			self.log_hosts ? self.log_hosts.length.to_s : "all",
 		]
 	end
 
@@ -137,7 +166,7 @@ class Loggability::Override
 	### Return a clone that has been modified with the specified +new_settings+.
 	def clone_with( new_settings, &block )
 		newobj = self.dup
-		newobj.settings.merge!( new_settings )
+		newobj.merge_settings( new_settings )
 
 		if block
 			return newobj.call( &block )
@@ -147,15 +176,30 @@ class Loggability::Override
 	end
 
 
+	### Merge any +new_settings+ into the receiving Override.
+	def merge_settings( new_settings )
+		if (( new_hosts = new_settings.delete(:log_hosts) ))
+			self.log_hosts = new_hosts
+		end
+		self.settings.merge!( new_settings )
+	end
+
+
+	### Return the log hosts that should be affected by the Override.
+	def log_hosts_to_affect
+		rval = Array( self.log_hosts || Loggability.log_hosts.values ).uniq
+		return rval.map {|obj| Loggability.log_host_for(obj) }
+	end
+
+
 	### Apply any configured overrides to all loggers.
 	def apply_overrides
 		self.synchronize do
-			raise LocalJumpError, "can't be called re-entrantly" unless
-				@overridden_settings.empty?
-			@overridden_settings = self.gather_current_settings
+			raise LocalJumpError, "can't be called re-entrantly" if self.overridden_settings
+			self.overridden_settings = self.gather_current_settings
 		end
 
-		Loggability.log_hosts.each do |key, host|
+		self.log_hosts_to_affect.each do |host|
 			host.logger.restore_settings( self.settings )
 		end
 	end
@@ -163,7 +207,7 @@ class Loggability::Override
 
 	### Return a Hash of Loggers with the settings they currently have.
 	def gather_current_settings
-		return Loggability.log_hosts.values.each_with_object( {} ) do |host, hash|
+		return self.log_hosts_to_affect.each_with_object( {} ) do |host, hash|
 			hash[ host ] = host.logger.settings
 		end
 	end
@@ -172,10 +216,13 @@ class Loggability::Override
 	### Restore the last settings saved by #apply_overrides to their corresponding
 	### loggers.
 	def restore_overridden_settings
-		@overridden_settings.each do |host, settings|
+		return unless self.overridden_settings
+
+		self.overridden_settings.each do |host, settings|
 			host.logger.restore_settings( settings )
 		end
-		@overridden_settings.clear
+
+		self.overridden_settings = nil
 	end
 
 end # class Loggability::Override
