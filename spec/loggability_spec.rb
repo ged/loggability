@@ -145,26 +145,35 @@ describe Loggability do
 
 		before( :each ) do
 			Loggability.reset
-			@loghost = Class.new do
+		end
+
+		let!( :loghost ) do
+			Class.new do
 				extend Loggability
 				log_as :testing
+			end
+		end
+		let!( :another_loghost ) do
+			Class.new do
+				extend Loggability
+				log_as :testing_another
 			end
 		end
 
 
 		it "can propagate a logging level to every loghost" do
 			Loggability.level = :warn
-			expect( Loggability[@loghost].level ).to be( :warn )
+			expect( Loggability[loghost].level ).to be( :warn )
 		end
 
 		it "can propagate an outputter to every loghost" do
 			Loggability.output_to( $stdout )
-			expect( Loggability[@loghost].logdev.dev ).to be( $stdout )
+			expect( Loggability[loghost].logdev.dev ).to be( $stdout )
 		end
 
 		it "can propagate a formatter to every loghost" do
 			Loggability.format_with( :color )
-			expect( Loggability[@loghost].formatter ).to be_a( Loggability::Formatter::Color )
+			expect( Loggability[loghost].formatter ).to be_a( Loggability::Formatter::Color )
 		end
 
 
@@ -180,11 +189,11 @@ describe Loggability do
 			it "can temporarily override where Loggability outputs to while executing a block" do
 				tmp_output = []
 
-				Loggability[ @loghost ].info "Before the override"
+				Loggability[ loghost ].info "Before the override"
 				Loggability.outputting_to( tmp_output ) do
-					Loggability[ @loghost ].info "During the override"
+					Loggability[ loghost ].info "During the override"
 				end
-				Loggability[ @loghost ].info "After the override"
+				Loggability[ loghost ].info "After the override"
 
 				expect( @default_output.size ).to eq(  2  )
 				expect( tmp_output.size ).to eq(  1  )
@@ -195,15 +204,15 @@ describe Loggability do
 				tmp_output = []
 				with_tmp_logging = Loggability.outputting_to( tmp_output )
 
-				Loggability[ @loghost ].info "Before the overrides"
+				Loggability[ loghost ].info "Before the overrides"
 				with_tmp_logging.call do
-					Loggability[ @loghost ].info "During the first override"
+					Loggability[ loghost ].info "During the first override"
 				end
-				Loggability[ @loghost ].info "Between overrides"
+				Loggability[ loghost ].info "Between overrides"
 				with_tmp_logging.call do
-					Loggability[ @loghost ].info "During the second override"
+					Loggability[ loghost ].info "During the second override"
 				end
-				Loggability[ @loghost ].info "After the overrides"
+				Loggability[ loghost ].info "After the overrides"
 
 				expect( @default_output.size ).to eq(  3  )
 				expect( tmp_output.size ).to eq(  2  )
@@ -211,11 +220,11 @@ describe Loggability do
 
 
 			it "can temporarily override what level Loggability logs at while executing a block" do
-				Loggability[ @loghost ].debug "Before the override"
+				Loggability[ loghost ].debug "Before the override"
 				Loggability.with_level( :debug ) do
-					Loggability[ @loghost ].debug "During the override"
+					Loggability[ loghost ].debug "During the override"
 				end
-				Loggability[ @loghost ].debug "After the override"
+				Loggability[ loghost ].debug "After the override"
 
 				expect( @default_output.size ).to eq(  1  )
 			end
@@ -224,26 +233,26 @@ describe Loggability do
 			it "can return an object that overrides what level Loggability logs at for any block" do
 				with_debug_logging = Loggability.with_level( :debug )
 
-				Loggability[ @loghost ].debug "Before the overrides"
+				Loggability[ loghost ].debug "Before the overrides"
 				with_debug_logging.call do
-					Loggability[ @loghost ].debug "During the first override"
+					Loggability[ loghost ].debug "During the first override"
 				end
-				Loggability[ @loghost ].debug "Between overrides"
+				Loggability[ loghost ].debug "Between overrides"
 				with_debug_logging.call do
-					Loggability[ @loghost ].debug "During the second override"
+					Loggability[ loghost ].debug "During the second override"
 				end
-				Loggability[ @loghost ].debug "After the overrides"
+				Loggability[ loghost ].debug "After the overrides"
 
 				expect( @default_output.size ).to eq(  2  )
 			end
 
 
 			it "can temporarily override what formatter loggers use while executing a block" do
-				Loggability[ @loghost ].info "Before the override"
+				Loggability[ loghost ].info "Before the override"
 				Loggability.formatted_with( :html ) do
-					Loggability[ @loghost ].info "During the override"
+					Loggability[ loghost ].info "During the override"
 				end
-				Loggability[ @loghost ].info "After the override"
+				Loggability[ loghost ].info "After the override"
 
 				expect( @default_output.size ).to eq(  3  )
 				expect( @default_output.grep(/<div/).size ).to eq(  1  )
@@ -253,20 +262,67 @@ describe Loggability do
 			it "can return an object that overrides what formatter loggers use for any block" do
 				with_html_logging = Loggability.formatted_with( :html )
 
-				Loggability[ @loghost ].info "Before the overrides"
+				Loggability[ loghost ].info "Before the overrides"
 				with_html_logging.call do
-					Loggability[ @loghost ].info "During the first override"
+					Loggability[ loghost ].info "During the first override"
 				end
-				Loggability[ @loghost ].info "Between overrides"
+				Loggability[ loghost ].info "Between overrides"
 				with_html_logging.call do
-					Loggability[ @loghost ].info "During the second override"
+					Loggability[ loghost ].info "During the second override"
 				end
-				Loggability[ @loghost ].info "After the overrides"
+				Loggability[ loghost ].info "After the overrides"
 
 				expect( @default_output.size ).to eq(  5  )
 				expect( @default_output.grep(/<div/).size ).to eq(  2  )
 			end
 
+
+			it "can temporarily override settings for only a subset of log hosts" do
+				for_only_one_loghost = Loggability.
+					for_logger( another_loghost ).
+					with_level( :debug )
+
+				Loggability[ loghost ].debug "Before the overrides"
+				Loggability[ another_loghost ].debug "Before the overrides"
+				for_only_one_loghost.call do
+					Loggability[ loghost ].debug "During the first override"
+					Loggability[ another_loghost ].debug "During the first override"
+				end
+				Loggability[ loghost ].debug "Between overrides"
+				Loggability[ another_loghost ].debug "Between overrides"
+				for_only_one_loghost.call do
+					Loggability[ loghost ].debug "During the second override"
+					Loggability[ another_loghost ].debug "During the second override"
+				end
+				Loggability[ loghost ].debug "After the overrides"
+				Loggability[ another_loghost ].debug "After the overrides"
+
+				expect( @default_output.size ).to eq( 2 )
+			end
+
+
+			it "can temporarily override settings for multiple log hosts" do
+				for_only_one_loghost = Loggability.
+					for_logger( loghost, another_loghost ).
+					with_level( :debug )
+
+				Loggability[ loghost ].debug "Before the overrides"
+				Loggability[ another_loghost ].debug "Before the overrides"
+				for_only_one_loghost.call do
+					Loggability[ loghost ].debug "During the first override"
+					Loggability[ another_loghost ].debug "During the first override"
+				end
+				Loggability[ loghost ].debug "Between overrides"
+				Loggability[ another_loghost ].debug "Between overrides"
+				for_only_one_loghost.call do
+					Loggability[ loghost ].debug "During the second override"
+					Loggability[ another_loghost ].debug "During the second override"
+				end
+				Loggability[ loghost ].debug "After the overrides"
+				Loggability[ another_loghost ].debug "After the overrides"
+
+				expect( @default_output.size ).to eq( 4 )
+			end
 
 		end
 

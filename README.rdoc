@@ -198,6 +198,17 @@ Loggability has a few ways of doing that:
         Client.connect!
     end
 
+You can also make the override only apply to the loggers for a subset of log hosts:
+
+    # Log only fatal errors on the loggers for the specified two classes
+    Loggability.with_level( :fatal ).for_loggers( ACME::Model, ACME::Adapter ) do
+      ACME.start_up
+    end
+
+    # Debug a particular class:
+    Loggability.with_level( :debug ).for_logger( ACME::Server ) do
+      ACME.start_up
+    end
 
 === Configurability
 
@@ -312,7 +323,7 @@ and generate the API documentation.
 
 == License
 
-Copyright (c) 2012-2016, Michael Granger
+Copyright (c) 2012-2017, Michael Granger
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
