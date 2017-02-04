@@ -1,3 +1,10 @@
+== v0.14.0 [2017-01-30] Michael Granger <ged@FaerieMUD.org>
+
+Enhancements:
+
+- Allow overriding log hosts for a block via #for_logger.
+
+
 == v0.13.0 [2017-01-16] Mahlon E. Smith <mahlon@martini.nu>
 
 Housekeeping:
