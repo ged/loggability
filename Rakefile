@@ -28,7 +28,7 @@ hoespec = Hoe.spec 'loggability' do
 	self.dependency 'simplecov',       '~> 0.7', :developer
 	self.dependency 'configurability', '~> 3.1', :developer
 
-	self.license "Ruby"
+	self.license "BSD-3-Clause"
 	self.require_ruby_version( '>=1.9.3' )
 	self.hg_sign_tags = true if self.respond_to?( :hg_sign_tags= )
 	self.check_history_on_release = true if self.respond_to?( :check_history_on_release= )
