@@ -1,4 +1,6 @@
-#!/usr/bin/env rspec -cfd
+# -*- ruby -*-
+# vim: set nosta noet ts=4 sw=4:
+# frozen_string_literal: true
 
 require_relative '../helpers'
 
