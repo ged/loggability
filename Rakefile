@@ -27,6 +27,7 @@ hoespec = Hoe.spec 'loggability' do
 	self.dependency 'hoe-bundler',     '~> 1.2', :developer
 	self.dependency 'simplecov',       '~> 0.7', :developer
 	self.dependency 'configurability', '~> 3.1', :developer
+	self.dependency 'timecop',         '~> 0.9', :developer
 
 	self.license "BSD-3-Clause"
 	self.require_ruby_version( '>=1.9.3' )

@@ -5,10 +5,8 @@
 require_relative '../helpers'
 
 require 'tempfile'
-require 'rspec'
 
 require 'loggability/logger'
-require 'loggability/formatter'
 require 'loggability/formatter/default'
 
 

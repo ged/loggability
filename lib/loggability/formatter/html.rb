@@ -2,12 +2,12 @@
 # vim: set nosta noet ts=4 sw=4:
 # frozen_string_literal: true
 
-require 'loggability' unless defined?( Loggability )
 require 'loggability/formatter' unless defined?( Loggability::Formatter )
+require 'loggability/formatter/default'
 
 
-# The default log formatter class.
-class Loggability::Formatter::HTML < Loggability::Formatter
+# Output logs as HTML
+class Loggability::Formatter::HTML < Loggability::Formatter::Default
 
 	# The default HTML fragment that'll be used as the template for each log message.
 	HTML_LOG_FORMAT = %q{

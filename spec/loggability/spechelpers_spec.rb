@@ -4,9 +4,6 @@
 
 require_relative '../helpers'
 
-require 'tempfile'
-require 'rspec'
-
 require 'loggability/spechelpers'
 
 

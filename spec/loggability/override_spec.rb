@@ -4,10 +4,6 @@
 
 require_relative '../helpers'
 
-require 'tempfile'
-require 'rspec'
-
-require 'loggability/logger'
 require 'loggability/override'
 
 
@@ -45,6 +41,21 @@ describe Loggability::Override do
 		override.call do
 			expect { override.call {} }.to raise_error( LocalJumpError )
 		end
+	end
+
+
+	it "can be inspected" do
+		expect( override.inspect ).
+			to match( %r(
+				#<
+					#{described_class.name}
+					:
+					0x\p{Xdigit}+
+					\s
+					formatter:\s-,\slevel:\s-,\soutput:\s-,\s
+					affecting\sall\slog\shosts
+				>
+			)x )
 	end
 
 

@@ -2,15 +2,6 @@
 # vim: set nosta noet ts=4 sw=4:
 # frozen_string_literal: true
 
-BEGIN {
-	require 'pathname'
-	basedir = Pathname.new( __FILE__ ).dirname.parent
-
-	libdir = basedir + "lib"
-
-	$LOAD_PATH.unshift( libdir.to_s ) unless $LOAD_PATH.include?( libdir.to_s )
-}
-
 # SimpleCov test coverage reporting; enable this using the :coverage rake task
 if ENV['COVERAGE']
 	$stderr.puts "\n\n>>> Enabling coverage report.\n\n"
@@ -25,6 +16,7 @@ begin
 rescue LoadError
 end
 
+require 'timecop'
 require 'loggability'
 require 'loggability/spechelpers'
 

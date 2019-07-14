@@ -278,7 +278,7 @@ class Loggability::Logger < ::Logger
 
 	### Format a log message using the current formatter and return it.
 	def format_message( severity, datetime, progname, msg )
-		self.formatter.call(severity, datetime, progname, msg)
+		self.formatter.call( severity, datetime, progname, msg )
 	end
 
 
