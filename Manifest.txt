@@ -2,7 +2,7 @@
 ChangeLog
 History.rdoc
 Manifest.txt
-README.rdoc
+README.md
 Rakefile
 lib/loggability.rb
 lib/loggability/constants.rb

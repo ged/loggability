@@ -1,12 +1,19 @@
-= loggability
+# loggability
 
-home   :: http://deveiate.org/projects/loggability
-code   :: http://bitbucket.org/ged/loggability
-docs   :: http://deveiate.org/code/loggability
-github :: http://github.com/ged/loggability
+home
+: https://hg.sr.ht/~ged/Loggability
+
+code
+: https://hg.sr.ht/~ged/Loggability/browse
+
+docs
+: https://deveiate.org/code/loggability
+
+github
+: https://github.com/ged/loggability
 
 
-== Description
+## Description
 
 A composable logging system built on the standard Logger library.
 
@@ -21,23 +28,23 @@ An example:
     require 'inversion'
     require 'treequel'
     require 'loggability'
-    
+
     # Set up our own library
     module MyProject
         extend Loggability
         log_as :my_project
-    
+
         class Server
             extend Loggability
             log_to :my_project
-    
+
             def initialize
                 self.log.debug "Listening."
             end
         end
-    
+
     end
-    
+
     # Now tell everything that's using Loggability to log to an HTML
     # log file at INFO level
     Loggability.write_to( '/usr/local/www/htdocs/log.html' )
@@ -45,30 +52,30 @@ An example:
     Loggability.level = :info
 
 
-== Prerequisites
+## Prerequisites
 
-* Ruby 1.9.3 or better, Rubinius 2.0 or better
+* Ruby 2.4+
 
 It will probably work under any other interpreter in which Logger works, but
 it's only tested in the above.
 
 
-== Installation
+## Installation
 
     $ gem install loggability
 
 
-== Usage
+## Usage
 
-Loggability is split up into two parts: {log hosts}[rdoc-ref:Loggability::LogHost]
-and {log clients}[rdoc-ref:Loggability::LogClient]. A <b>log
+Loggability is split up into two parts: [log hosts](rdoc-ref:Loggability::LogHost)
+and [log clients](rdoc-ref:Loggability::LogClient). A <b>log
 host</b> is an object that contains a Logger instance that will be used to
 log stuff. A <b>log client</b> is an object that will write logging messages to a
 particular <b>log host</b>'s Logger.
 
 Both parts require that you extend the object with Loggability.
 
-=== Setting Up A 'Log Host'
+### Setting Up A 'Log Host'
 
 To install a Logger into an object, you use the +log_as+ declaration with a
 Symbol that will be used as the key for the object's Logger:
@@ -116,10 +123,10 @@ or use a few new convenience methods for changing the logging level:
     log_messages = []
     MyProject.logger.output_to( log_messages )
 
-...{and more}[rdoc-ref:Loggability::Logger].
+...[and more](rdoc-ref:Loggability::Logger).
 
 
-=== Setting Up A 'Log Client'
+### Setting Up A 'Log Client'
 
 To add an object that will log to your log host, after you <tt>extend Loggability</tt>,
 use the +log_to+ declaration to hook up the object (and instances of the object if
@@ -153,7 +160,7 @@ You can also use the <b>log host</b> itself as the argument to +log_to+:
     end
 
 
-=== Aggregate Logging
+### Aggregate Logging
 
 If you have several <b>log hosts</b>, and you want to affect them all simultaneously,
 you can do that using the aggregate functions of Loggability. They're the same as the
@@ -161,15 +168,15 @@ methods on Loggability::Logger:
 
     # Set all logs to log at INFO level
     Loggability.level = :info
-    
+
     # Write HTML logs
     Loggability.format_with( :html )
-    
+
     # Log everything to the same logfile
     Loggability.output_to( "/tmp/my_project_log.html" )
 
 
-=== Temporarily Overriding Logging  Behavior
+### Temporarily Overriding Logging  Behavior
 
 Sometimes you want to log one particular chunk of code at a different
 level, or to a different destination, and then restore everything back
@@ -187,7 +194,7 @@ Loggability has a few ways of doing that:
     Loggability.outputting_to( logs ) do
         ...
     end
-    
+
     # Log using the HTML formatter
     Loggability.formatted_with( :html ) do
         ...
@@ -210,7 +217,7 @@ You can also make the override only apply to the loggers for a subset of log hos
       ACME.start_up
     end
 
-=== Configurability
+### Configurability
 
 Loggability has support for the Configurability[https://rubygems.org/gems/configurability]
 library, which does the same thing for configuration that Loggability does for
@@ -230,39 +237,41 @@ The format of the value of each logger is:
 
 where:
 
-[+SEVERITY+]
-  The log level; one of: +debug+, +info+, +warn+, +error+, or +fatal+
-[+TARGET+]
-  The destination for log messages. This can be the path to a log file, or
-  one of <tt>'STDOUT'</tt> or <tt>'STDERR'</tt>, which get mapped to the
-  equivalent filehandle. Optional.
-[+FORMAT+]
-  The name of one of the formatters. Loggability comes with +default+ (plaintext),
-  +color+ (ANSI colored text), and +html+ formatters. Optional.
++SEVERITY+
+:  The log level; one of: +debug+, +info+, +warn+, +error+, or +fatal+
 
-If the special key <tt>__default__</tt> is included, its config will be used to set
-global defaults before the individual configs are applied.
++TARGET+
+:  The destination for log messages. This can be the path to a log file, or
+   one of <tt>'STDOUT'</tt> or <tt>'STDERR'</tt>, which get mapped to the
+   equivalent filehandle. Optional.
 
-If either of the optional values is unspecified, it is left unchanged from what it
-was before configuration.
++FORMAT+
+:  The name of one of the formatters. Loggability comes with +default+
+   (plaintext), +color+ (ANSI colored text), and +html+ formatters. Optional.
+
+If the special key <tt>__default__</tt> is included, its config will be used to
+set global defaults before the individual configs are applied.
+
+If either of the optional values is unspecified, it is left unchanged from what
+it was before configuration.
 
 
-=== RSpec Helpers
+### RSpec Helpers
 
-Loggability includes a couple of helper functions for RSpec that allow you to control
-log levels for particular specs.
+Loggability includes a couple of helper functions for RSpec that allow you to
+control log levels for particular specs.
 
-To use it, require <tt>loggability/spechelpers</tt> in your specs (we put it in the 
-spec helpers file) and then include the helpers from your RSpec config:
+To use it, require <tt>loggability/spechelpers</tt> in your specs (we put it in
+the spec helpers file) and then include the helpers from your RSpec config:
 
-  require 'loggability/spechelpers'
-  RSpec.configure do |c|
-    # ...
-    c.include( Loggability::SpecHelpers )
-  end
+    require 'loggability/spechelpers'
+    RSpec.configure do |c|
+      # ...
+      c.include( Loggability::SpecHelpers )
+    end
 
-This will install a before and after `:all` hook to set the logging levels before each
-example group and then reset it before moving on to the next group.
+This will install a before and after `:all` hook to set the logging levels
+before each example group and then reset it before moving on to the next group.
 
 You can also access the bodies of those hooks manually:
 
@@ -270,31 +279,31 @@ You can also access the bodies of those hooks manually:
   reset_logging()
 
 The helpers also allow you to set logging levels for a whole example group, for
-particular contexts, or even for individual examples using RSpec's metadata hash
-syntax:
+particular contexts, or even for individual examples using RSpec's metadata
+hash syntax:
 
   # Set logging to 'error' level for each example in this group
   describe MyClass, logging: :error do
-  
+
     # ...but for examples in this context, set it to 'fatal'
     context 'created with a target', log: :fatal do
-    
+
       # ...except for this one, which logs at 'debug' level
       it "does something to it", logging: :debug do
-      
+
       end
-    
+
       it "does some other stuff, too"
-    
+
     end
-  
+
   end
 
-The {setup_logging}[rdoc-ref:Loggability::SpecHelpers.setup_logging] helper
+The [setup_logging](rdoc-ref:Loggability::SpecHelpers.setup_logging) helper
 also provides support for displaying the logs inline with spec formatters for
 which outputting the logs to STDERR isn't optimal. The only one that's
-currently uses it is the 
-{'webkit' formatter}[https://rubygems.org/gems/rspec-formatter-webkit], but
+currently uses it is the
+['webkit' formatter](https://rubygems.org/gems/rspec-formatter-webkit), but
 it should be easy to adapt to other HTML displays as well.
 
 It looks for either an +HTML_LOGGING+ environment variable, or for the
@@ -307,23 +316,21 @@ This can be used to append logs to each example when the formatter
 builds the output.
 
 
-== Contributing
+## Contributing
 
 You can check out the current development source with
-Mercurial[http://bitbucket.org/ged/loggability], or if you prefer Git, via
-{its Github mirror}[https://github.com/ged/loggability].
-
-After checking out the source, run:
-
-    $ rake newb
-
-This task will install any missing dependencies, run the tests/specs,
-and generate the API documentation.
+Mercurial[http://hg.sr.ht/~ged/Loggability], or if you prefer Git, via
+[its Github mirror](https://github.com/ged/loggability).
 
 
-== License
+## Author
 
-Copyright (c) 2012-2017, Michael Granger
+- Michael Granger <ged@faeriemud.org>
+
+
+## License
+
+Copyright (c) 2012-2019, Michael Granger
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without

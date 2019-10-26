@@ -1,4 +1,4 @@
-^doc/
+^docs/
 ^coverage/
 ^pkg/
 \.DS_Store
