@@ -11,9 +11,6 @@ module Loggability
 	# Package version constant
 	VERSION = '0.14.0'
 
-	# VCS revision
-	REVISION = %q$Revision$
-
 	# The key for the global logger (Loggability's own logger)
 	GLOBAL_KEY = :__global__
 
@@ -62,14 +59,6 @@ module Loggability
 	autoload :LogHost, 'loggability/loghost'
 	autoload :LogClient, 'loggability/logclient'
 	autoload :Override, 'loggability/override'
-
-
-	### Return the library's version string
-	def self::version_string( include_buildnum=false )
-		vstring = "%s %s" % [ self.name, VERSION ]
-		vstring << " (build %s)" % [ REVISION[/: ([[:xdigit:]]+)/, 1] || '0' ] if include_buildnum
-		return vstring
-	end
 
 
 	### Cast the given +device+ to a Loggability::Logger, if possible, and return it. If

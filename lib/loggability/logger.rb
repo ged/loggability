@@ -28,7 +28,8 @@ class Loggability::Logger < ::Logger
 	# to a file descriptor or a file.
 	class AppendingLogDevice
 
-		### Create a new AppendingLogDevice that will append content to +array+.
+		### Create a new AppendingLogDevice that will append content to +target+ (a
+		### object that responds to #>>).
 		def initialize( target )
 			@target = target
 		end
