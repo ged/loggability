@@ -33,6 +33,9 @@ Gem::Specification.new do |s|
       s.add_development_dependency(%q<configurability>.freeze, ["~> 3.1"])
       s.add_development_dependency(%q<rdoc>.freeze, ["~> 4.0"])
       s.add_development_dependency(%q<hoe>.freeze, ["~> 3.15"])
+      s.add_development_dependency(%q<concurrent-ruby>.freeze, ["~> 1.1"])
+      s.add_development_dependency('pry')
+      s.add_development_dependency('webmock')
     else
       s.add_dependency(%q<hoe-mercurial>.freeze, ["~> 1.4"])
       s.add_dependency(%q<hoe-deveiate>.freeze, ["~> 0.8"])

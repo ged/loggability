@@ -6,6 +6,7 @@ require 'logger'
 require 'loggability' unless defined?( Loggability )
 require 'loggability/constants'
 require 'loggability/formatter'
+require 'loggability/log_device'
 
 
 # A subclass of Logger that provides additional API for configuring outputters,
@@ -13,6 +14,7 @@ require 'loggability/formatter'
 class Loggability::Logger < ::Logger
 	include Loggability::Constants,
 	        Logger::Severity
+
 
 	# Default log 'device'
 	DEFAULT_DEVICE = $stderr
@@ -24,33 +26,20 @@ class Loggability::Logger < ::Logger
 	DEFAULT_SHIFT_SIZE = 1048576
 
 
-	# A log device that appends to the object it's constructed with instead of writing
-	# to a file descriptor or a file.
-	class AppendingLogDevice
+	class MultiDevice
 
-		### Create a new AppendingLogDevice that will append content to +array+.
-		def initialize( target )
-			@target = target
+		def initialize( args )
+			@targets = args
 		end
 
 
-		######
-		public
-		######
+		attr_reader :targets
 
-		# The target of the log device
-		attr_reader :target
-
-
-		### Append the specified +message+ to the target.
-		def write( message )
-			@target << message
+		def write( *args )
+			self.targets.each{ |dev| dev.write( *args ) }
 		end
 
-		### No-op -- this is here just so Logger doesn't complain
-		def close; end
-
-	end # class AppendingLogDevice
+	end
 
 
 	# Proxy for the Logger that injects the name of the object it wraps as the 'progname'
@@ -251,14 +240,15 @@ class Loggability::Logger < ::Logger
 	### logging to IO objects and files (given a filename in a String), this method can also
 	### set up logging to any object that responds to #<<.
 	def output_to( target, *args )
-		if target.is_a?( Logger::LogDevice ) ||
-		   target.is_a?( Loggability::Logger::AppendingLogDevice )
+		if target.is_a?( Logger::LogDevice ) || target.is_a?( Loggability::LogDevice )
 			self.logdev = target
 		elsif target.respond_to?( :write ) || target.is_a?( String )
 			opts = { :shift_age => args.shift || 0, :shift_size => args.shift || 1048576 }
 			self.logdev = Logger::LogDevice.new( target, opts )
+		elsif target.respond_to?( :any? ) && target.any?( Loggability::LogDevice )
+			self.logdev = MultiDevice.new( target )
 		elsif target.respond_to?( :<< )
-			self.logdev = AppendingLogDevice.new( target )
+			self.logdev = Loggability::LogDevice.create( :appending, target )
 		else
 			raise ArgumentError, "don't know how to output to %p (a %p)" % [ target, target.class ]
 		end

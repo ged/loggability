@@ -376,6 +376,13 @@ describe Loggability do
 			expect( result ).to eq([ 'info', 'html', '/usr/local/www/htdocs/log.html' ])
 		end
 
+		it 'can parse a logging confi spec with a severity, a http service name with its api key' do
+			result = Loggability.parse_config_spec('warn datadog[datadog_api_key]: (Color)')
+			expect( result[0] ).to eq( 'warn' )
+			expect( result[1] ).to eq( 'Color' )
+			expect( result[2].first ).to be_instance_of( Loggability::LogDevice::Datadog )
+		end
+
 		it "can configure loghosts via its ::configure method" do
 			config = {'class1' => 'debug (html)', 'class2' => 'error spec-error.log'}
 			Loggability.configure( config )
