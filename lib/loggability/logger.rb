@@ -218,17 +218,6 @@ class Loggability::Logger < ::Logger
 	end
 
 
-	#
-	# :section: Severity Level
-	#
-
-	### Return the logger's level as a Symbol.
-	def level
-		numeric_level = super
-		return LOG_LEVEL_NAMES[ numeric_level ]
-	end
-
-
 	### Set the logger level to +newlevel+, which can be a numeric level (e.g.,
 	### Logger::DEBUG, etc.), or a symbolic level (e.g., :debug, :info, etc.)
 	def level=( newlevel )

@@ -35,7 +35,7 @@ describe Loggability::Logger do
 		newlogger = described_class.from_std_logger( regular_logger )
 		expect( newlogger ).to be_a( Loggability::Logger )
 		expect( newlogger.logdev.dev ).to be( regular_logger.instance_variable_get(:@logdev).dev )
-		expect( Loggability::LOG_LEVELS[newlogger.level] ).to eq( regular_logger.level )
+		expect( newlogger.level ).to eq( regular_logger.level )
 		expect( newlogger.formatter ).to be_a( Loggability::Formatter::Default )
 	end
 
@@ -94,7 +94,7 @@ describe Loggability::Logger do
 
 		logger.restore_settings( settings )
 
-		expect( logger.level ).to be( :fatal )
+		expect( logger.level ).to be( Loggability::LOG_LEVELS[ :fatal ] )
 		expect( logger.formatter ).to be( settings[:formatter] )
 		expect( logger.logdev ).to be( settings[:logdev] )
 	end
@@ -103,13 +103,13 @@ describe Loggability::Logger do
 	describe "severity level API" do
 
 		it "defaults to :warn level" do
-			expect( logger.level ).to eq( :warn )
+			expect( logger.level ).to eq( Loggability::LOG_LEVELS[ :warn ] )
 		end
 
 		it "defaults to :debug level when $DEBUG is true" do
 			begin
 				$DEBUG = true
-				expect( described_class.new.level ).to eq( :debug )
+				expect( described_class.new.level ).to eq( Loggability::LOG_LEVELS[ :debug ] )
 			ensure
 				$DEBUG = false
 			end
@@ -119,17 +119,17 @@ describe Loggability::Logger do
 			newlevel = Logger::DEBUG
 			$stderr.puts "Setting newlevel to %p" % [ newlevel ]
 			logger.level = newlevel
-			expect( logger.level ).to eq( :debug )
+			expect( logger.level ).to eq( Loggability::LOG_LEVELS[ :debug ] )
 		end
 
 		it "allows its levels to be set with Symbolic level names" do
 			logger.level = :info
-			expect( logger.level ).to eq( :info )
+			expect( logger.level ).to eq( Loggability::LOG_LEVELS[ :info ] )
 		end
 
 		it "allows its levels to be set with Stringish level names" do
 			logger.level = 'fatal'
-			expect( logger.level ).to eq( :fatal )
+			expect( logger.level ).to eq( Loggability::LOG_LEVELS[ :fatal ] )
 		end
 
 	end

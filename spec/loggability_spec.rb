@@ -163,7 +163,7 @@ describe Loggability do
 
 		it "can propagate a logging level to every loghost" do
 			Loggability.level = :warn
-			expect( Loggability[loghost].level ).to be( :warn )
+			expect( Loggability[loghost].level ).to be( Loggability::LOG_LEVELS[ :warn ] )
 		end
 
 		it "can propagate an outputter to every loghost" do
@@ -380,9 +380,9 @@ describe Loggability do
 			config = {'class1' => 'debug (html)', 'class2' => 'error spec-error.log'}
 			Loggability.configure( config )
 
-			expect( Loggability[class1].level ).to be( :debug )
+			expect( Loggability[class1].level ).to be( Loggability::LOG_LEVELS[ :debug ] )
 			expect( Loggability[class1].formatter ).to be_a( Loggability::Formatter::HTML )
-			expect( Loggability[class2].level ).to be( :error )
+			expect( Loggability[class2].level ).to be( Loggability::LOG_LEVELS[ :error ] )
 			expect( Loggability[class2].logdev.dev ).to be_a( File )
 			expect( Loggability[class2].logdev.dev.path ).to eq( 'spec-error.log' )
 		end
@@ -399,9 +399,9 @@ describe Loggability do
 			config = Configurability::Config.new( configsource )
 			config.install
 
-			expect( Loggability[class1].level ).to be( :debug )
+			expect( Loggability[class1].level ).to be( Loggability::LOG_LEVELS[ :debug ] )
 			expect( Loggability[class1].formatter ).to be_a( Loggability::Formatter::HTML )
-			expect( Loggability[class2].level ).to be( :error )
+			expect( Loggability[class2].level ).to be( Loggability::LOG_LEVELS[ :error ] )
 			expect( Loggability[class2].logdev.dev ).to be_a( File )
 			expect( Loggability[class2].logdev.dev.path ).to eq( 'spec-error.log' )
 		end
@@ -410,7 +410,7 @@ describe Loggability do
 			Loggability.configure( '__default__' => 'debug STDERR (html)' )
 
 			loggers = Loggability.log_hosts.values.map( &:logger )
-			expect( loggers.map(&:level) ).to all_be( :debug )
+			expect( loggers.map(&:level) ).to all_be( Loggability::LOG_LEVELS[ :debug ] )
 			expect( loggers.map(&:formatter) ).to all_be_a( Loggability::Formatter::HTML )
 			expect( loggers.map(&:logdev).map(&:dev) ).to all_be( $stderr )
 		end
@@ -437,7 +437,7 @@ describe Loggability do
 			Loggability.configure( __default__: 'warn', late_class: 'debug (color)' )
 			late_class = Class.new { extend Loggability; log_as :late_class }
 
-			expect( late_class.logger.level ).to eq( :debug )
+			expect( late_class.logger.level ).to eq( Loggability::LOG_LEVELS[ :debug ] )
 			expect( late_class.logger.formatter ).to be_a( Loggability::Formatter::Color )
 		end
 
@@ -445,7 +445,7 @@ describe Loggability do
 			Loggability.configure( __default__: 'error' )
 			late_class = Class.new { def name; "TheTestClass"; end; extend Loggability; log_as :late_class }
 
-			expect( late_class.logger.level ).to eq( :error )
+			expect( late_class.logger.level ).to eq( Loggability::LOG_LEVELS[ :error ] )
 			expect( late_class.logger.formatter ).to be_a( Loggability::Formatter::Default )
 		end
 
