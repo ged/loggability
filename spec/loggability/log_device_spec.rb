@@ -13,6 +13,11 @@ require 'loggability/log_device/appending'
 
 describe Loggability::LogDevice do
 
+	after( :each ) do
+		File.unlink( "mylog.log" ) if File.exist?( "mylog.log" )
+	end
+
+
 	it "can parse a config entry and return a Loggability::LogDevice::Datadog instance" do
 		target_spec = ' datadog[data_dog_api_key] (color)'
 
