@@ -29,7 +29,7 @@ module Loggability
 			(?<severity>(?i:debug|info|warn|error|fatal))
 		    (?:
 				\s+
-				(?<target>(?:[\w\-/:\.]|\\[ ])+)
+				(?<target>(?:[\w\-/:\.\[\]]|\\[ ])+)
 			)?
 			(?: \s+\(
 				(?<format>\w+)
@@ -321,6 +321,7 @@ module Loggability
 		target = case target
 			when 'STDOUT' then $stdout
 			when 'STDERR' then $stderr
+			when /:/ then Loggability::LogDevice.parse_device_spec( target )
 			else
 				target
 			end

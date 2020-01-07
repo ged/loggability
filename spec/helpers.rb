@@ -20,7 +20,6 @@ require 'timecop'
 require 'loggability'
 require 'loggability/spechelpers'
 
-
 # Helpers specific to Loggability specs
 module SpecHelpers
 
@@ -105,6 +104,7 @@ RSpec.configure do |c|
 	c.include( SpecHelpers )
 	c.include( Loggability::SpecHelpers )
 	c.filter_run_excluding( :configurability ) unless defined?( Configurability )
+
 
 end
 

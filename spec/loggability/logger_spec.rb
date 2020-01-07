@@ -156,10 +156,57 @@ describe Loggability::Logger do
 			expect( logger.logdev.instance_variable_get(:@shift_size) ).to eq( 125000 )
 		end
 
+		it "can be told to log to a file and delegate to ruby's built-in logger log device" do
+			logfile = double( "logfile.log" )
+			expect( Loggability::LogDevice ).to receive( :create ).
+				with( :file, 'log_file.log' ).
+				and_return( logfile )
+
+			logfile = Loggability::LogDevice.create( :file, 'log_file.log' )
+			expect( logger ).to receive( :output_to ).
+				with( logfile ).
+				and_return( nil )
+
+			logger.output_to( logfile )
+
+			expect( logger.logdev ).to be_a( Logger::LogDevice )
+		end
+
+		it "can be told to log to datadog but won't send messages until it has batched enough log entries" do
+			datadog_logdev = Loggability::LogDevice.create( :datadog, 'datadog_api_key' )
+			logger.output_to( datadog_logdev )
+
+			expect( logger.logdev ).to be_a( Loggability::LogDevice::Datadog )
+			expect( datadog_logdev.http ).not_to receive( :request ).
+				with( datadog_logdev.target )
+
+			(Loggability::LogDevice::Datadog::MAX_BATCH_SIZE - 1).times do
+				logger.warn( 'just a warning this time.' )
+			end
+		end
+
+
+		it "can be told to log to datadog and send messages" do
+			datadog_logdev = Loggability::LogDevice.create( :datadog, 'datadog_api_key' )
+			logger.output_to( datadog_logdev )
+
+			expect( logger.logdev ).to be_a( Loggability::LogDevice::Datadog )
+			expect( datadog_logdev.http ).to receive( :request ).
+				with( datadog_logdev.target ).
+				and_return( Net::HTTPOK )
+
+			Loggability::LogDevice::Datadog::MAX_BATCH_SIZE.times do
+				logger.warn( 'just a warning this time.' )
+			end
+			## A little nap to make sure async call to datadog happened
+			sleep( 0.1 )
+		end
+
+
 		it "can be told to log to an Array" do
 			logmessages = []
 			logger.output_to( logmessages )
-			expect( logger.logdev ).to be_a( Loggability::Logger::AppendingLogDevice )
+			expect( logger.logdev ).to be_a( Loggability::LogDevice::Appending )
 			logger.level = :debug
 			logger.info( "Something happened." )
 			expect( logmessages.size ).to eq(  1  )
@@ -176,7 +223,7 @@ describe Loggability::Logger do
 			expect( logger.logdev ).to be( original_logdev )
 		end
 
-		it "doesn't re-wrap an AppendingLogDevice" do
+		it "doesn't re-wrap an Appending log device" do
 			log_array = []
 			logger.output_to( log_array )
 			logger.output_to( logger.logdev )

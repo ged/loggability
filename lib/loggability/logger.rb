@@ -273,14 +273,15 @@ class Loggability::Logger < ::Logger
 	### logging to IO objects and files (given a filename in a String), this method can also
 	### set up logging to any object that responds to #<<.
 	def output_to( target, *args )
-		if target.is_a?( Logger::LogDevice ) ||
-		   target.is_a?( Loggability::Logger::AppendingLogDevice )
+		if target.is_a?( Logger::LogDevice ) || target.is_a?( Loggability::LogDevice )
 			self.logdev = target
 		elsif target.respond_to?( :write ) || target.is_a?( String )
 			opts = { :shift_age => args.shift || 0, :shift_size => args.shift || 1048576 }
 			self.logdev = Logger::LogDevice.new( target, **opts )
+		elsif target.respond_to?( :any? ) && target.any?( Loggability::LogDevice )
+			self.logdev = MultiDevice.new( target )
 		elsif target.respond_to?( :<< )
-			self.logdev = AppendingLogDevice.new( target )
+			self.logdev = Loggability::LogDevice.create( :appending, target )
 		else
 			raise ArgumentError, "don't know how to output to %p (a %p)" % [ target, target.class ]
 		end
