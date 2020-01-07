@@ -26,13 +26,13 @@ module Loggability
 	LOGSPEC_PATTERN = %r{
 		^
 			\s*
-			((?i:debug|info|warn|error|fatal))   # severity
+			(?<severity>(?i:debug|info|warn|error|fatal))
 		    (?:
 				\s+
-				((?:[\w\-/:\.]|\\[ ])+)
+				(?<target>(?:[\w\-/:\.]|\\[ ])+)
 			)?
 			(?: \s+\(
-				(\w+)
+				(?<format>\w+)
 			\) )?
 			\s*
 		$
