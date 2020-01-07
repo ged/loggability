@@ -6,5 +6,6 @@ group :development do
 	gem 'configurability', '~> 3.1'
 	gem 'timecop', '~> 0.9'
 	gem 'rdoc-generator-fivefish', '~> 0.4'
+	gem 'concurrent-ruby', '~> 1.1'
 end
 
