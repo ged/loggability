@@ -183,6 +183,28 @@ class Loggability::Logger < ::Logger
 	end
 
 
+	### Log a message if the +severity+ is high enough. Overridden to account for
+	### the overridden #level.
+	def add( severity, message=nil, progname=nil )
+		return true if severity < self.sev_threshold
+		progname ||= @progname
+
+		unless message
+			if block_given?
+				message = yield
+			else
+				message = progname
+				progname = @progname
+			end
+		end
+
+		msg = self.format_message( self.format_severity(severity), Time.now, progname, message )
+		self.logdev.write( msg )
+
+		return true
+	end
+
+
 	### Append operator -- Override Logger's append so log messages always have
 	### formatting, and are always appended at :debug level.
 	def <<( message )
@@ -225,8 +247,7 @@ class Loggability::Logger < ::Logger
 
 	### Return the logger's level as a Symbol.
 	def level
-		numeric_level = super
-		return LOG_LEVEL_NAMES[ numeric_level ]
+		return LOG_LEVEL_NAMES[ self.sev_threshold ]
 	end
 
 
@@ -280,6 +301,13 @@ class Loggability::Logger < ::Logger
 	### Format a log message using the current formatter and return it.
 	def format_message( severity, datetime, progname, msg )
 		self.formatter.call( severity, datetime, progname, msg )
+	end
+
+
+	### Return the formatted name of the given +severity+.
+	def format_severity( severity )
+		name = LOG_LEVEL_NAMES[ severity ] || severity.to_s
+		return name.upcase
 	end
 
 
