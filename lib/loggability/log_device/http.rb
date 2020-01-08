@@ -10,13 +10,22 @@ require 'loggability/logger' unless defined?( Loggability::Logger )
 
 require 'loggability/log_device'
 
-### This is the a generalized class that allows its subclasses to send
-### log messages to HTTP endpoints asynchronously on a separate thread.
-class Loggability::HttpLogDevice < Loggability::LogDevice
+# This is the a generalized class that allows its subclasses to send log
+# messages to HTTP endpoints asynchronously on a separate thread.
+class Loggability::LogDevice::Http < Loggability::LogDevice
 
+
+	### Initialize the HTTP log device to send to the specified +endpoint+ with the
+	### given +options+. Valid options are:
+	###
+	### [:execution_interval]
+	###   How many seconds between sending batches of queued messages.
+	### [:timeout_interval]
+	###   How many seconds to wait for the 
 	def initialize( endpoint, opts={} )
 		@execution_interval = opts[:execution_interval] || 60
 		@timeout_interval = opts[:timeout_interval] || 5
+
 		self.http = endpoint
 		self.start_executor
 		self.start_timertask
@@ -84,6 +93,7 @@ class Loggability::HttpLogDevice < Loggability::LogDevice
 		@executor.auto_terminate = true
 	end
 
+
 	### Shutdown the executor, which is a pool of single thread
 	### waits 3 seconds for shutdown to complete
 	def stop
@@ -123,4 +133,5 @@ class Loggability::HttpLogDevice < Loggability::LogDevice
 	end
 
 
-end
+end # class Loggability::LogDevice::Http
+

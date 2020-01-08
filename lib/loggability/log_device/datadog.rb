@@ -79,6 +79,7 @@ class Loggability::LogDevice::Datadog < Loggability::HttpLogDevice
 		end
 	end
 
+
 	### Closes the http connection
 	def close
 		begin
