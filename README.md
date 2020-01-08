@@ -330,7 +330,7 @@ Mercurial[http://hg.sr.ht/~ged/Loggability], or if you prefer Git, via
 
 ## License
 
-Copyright (c) 2012-2019, Michael Granger
+Copyright (c) 2012-2020, Michael Granger
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
