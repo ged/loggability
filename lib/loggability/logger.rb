@@ -278,7 +278,7 @@ class Loggability::Logger < ::Logger
 			self.logdev = target
 		elsif target.respond_to?( :write ) || target.is_a?( String )
 			opts = { :shift_age => args.shift || 0, :shift_size => args.shift || 1048576 }
-			self.logdev = Logger::LogDevice.new( target, opts )
+			self.logdev = Logger::LogDevice.new( target, **opts )
 		elsif target.respond_to?( :<< )
 			self.logdev = AppendingLogDevice.new( target )
 		else
