@@ -99,6 +99,8 @@ RSpec.configure do |c|
 	c.mock_with( :rspec ) do |mock|
 		mock.syntax = :expect
 	end
+	c.warnings = true
+	c.profile_examples = 5
 
 	c.include( SpecHelpers )
 	c.include( Loggability::SpecHelpers )
