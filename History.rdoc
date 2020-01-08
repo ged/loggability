@@ -1,3 +1,16 @@
+= Release History for loggability
+
+---
+
+== v0.15.0 [2020-01-08] Michael Granger <ged@faeriemud.org>
+
+Enhancements:
+
+- Make literal strings frozen by default
+- Add a structured log formatter.
+- Add fixes for Ruby 2.6 and 2.7
+
+
 == v0.14.0 [2017-01-30] Michael Granger <ged@FaerieMUD.org>
 
 Enhancements:
