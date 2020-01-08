@@ -1,14 +1,14 @@
 # -*- rspec -*-
 
-require_relative '../helpers'
+require_relative '../../helpers'
 
 require 'tempfile'
 require 'rspec'
 
-require 'loggability/http_log_device'
+require 'loggability/log_device/http'
 
 
-describe Loggability::HttpLogDevice do
+describe Loggability::LogDevice::Http do
 
 	let( :ENDPOINT ) { 'https://localhost' }
 	let( :http_log_device ) do

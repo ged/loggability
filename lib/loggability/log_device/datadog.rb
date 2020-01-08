@@ -8,11 +8,12 @@ require 'json'
 require 'concurrent'
 require 'loggability/logger' unless defined?( Loggability::Logger )
 
-require 'loggability/http_log_device'
+require 'loggability/log_device/http'
+
 
 # A log device that sends logs to Datadog's HTTP endpoint
 # for receiving logs
-class Loggability::LogDevice::Datadog < Loggability::HttpLogDevice
+class Loggability::LogDevice::Datadog < Loggability::LogDevice::Http
 
 	### Datadog's HTTP endpoint URL for sending logs to
 	ENDPOINT = "https://http-intake.logs.datadoghq.com"
