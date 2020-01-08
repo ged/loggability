@@ -1,6 +1,6 @@
 source 'https://rubygems.org'
 
-group :developer do
+group :development do
 	gem 'rake-deveiate', '~> 0.4'
 	gem 'simplecov', '~> 0.7'
 	gem 'configurability', '~> 3.1'
