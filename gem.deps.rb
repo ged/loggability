@@ -1,7 +1,7 @@
 source 'https://rubygems.org'
 
 group :development do
-	gem 'rake-deveiate', '~> 0.4'
+	gem 'rake-deveiate', '~> 0.7'
 	gem 'simplecov', '~> 0.7'
 	gem 'configurability', '~> 3.1'
 	gem 'timecop', '~> 0.9'
