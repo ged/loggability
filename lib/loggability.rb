@@ -9,7 +9,7 @@ require 'date'
 module Loggability
 
 	# Package version constant
-	VERSION = '0.15.0'
+	VERSION = '0.15.1'
 
 	# The key for the global logger (Loggability's own logger)
 	GLOBAL_KEY = :__global__

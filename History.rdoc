@@ -2,7 +2,17 @@
 
 ---
 
+== v0.15.1 [2020-01-09] Michael Granger <ged@faeriemud.org>
+
+Bugfixes:
+
+- Change the spec to require Ruby 2.5 or greater. This was because
+  of the use methods that are only public in newer versions.
+
+
 == v0.15.0 [2020-01-08] Michael Granger <ged@faeriemud.org>
+
+(Yanked)
 
 Enhancements:
 
