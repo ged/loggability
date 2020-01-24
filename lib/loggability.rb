@@ -38,10 +38,16 @@ module Loggability
 		$
 	}x
 
-	require 'loggability/constants'
-	include Loggability::Constants
 
-	require 'loggability/logger'
+	# Automatically load subordinate classes/modules
+	autoload :Constants, 'loggability/constants'
+	autoload :LogDevice, 'loggability/log_device'
+	autoload :Logger, 'loggability/logger'
+	autoload :LogHost, 'loggability/loghost'
+	autoload :LogClient, 'loggability/logclient'
+	autoload :Override, 'loggability/override'
+
+	include Loggability::Constants
 
 
 	##
@@ -55,10 +61,6 @@ module Loggability
 	@config = CONFIG_DEFAULTS.dup.freeze
 
 
-	# Automatically log the log host and log client mixins when they're referenced
-	autoload :LogHost, 'loggability/loghost'
-	autoload :LogClient, 'loggability/logclient'
-	autoload :Override, 'loggability/override'
 
 
 	### Cast the given +device+ to a Loggability::Logger, if possible, and return it. If
