@@ -14,17 +14,45 @@ require 'loggability/log_device'
 # messages to HTTP endpoints asynchronously on a separate thread.
 class Loggability::LogDevice::Http < Loggability::LogDevice
 
+	# The default HTTP endpoint URL to send logs to
+	DEFAULT_ENDPOINT = "http://localhost:12775/v1/logs"
+
+	# The max number of messages that can be sent to the server in a single payload
+	MAX_BATCH_SIZE = 100
+
+	# The max size in bytes for a single message.
+	MAX_MESSAGE_BYTESIZE = 2 * 16
+
+	# The max size in bytes of all messages in the batch.
+	MAX_BATCH_BYTESIZE = MAX_MESSAGE_BYTESIZE * MAX_BATCH_SIZE
+
+	# The default number of seconds between batches
+	DEFAULT_EXECUTION_INTERVAL = 60
+
+	# The default number of seconds to wait for the send to complete before timing
+	# out.
+	DEFAULT_SEND_TIMEOUT = 5
+
+	# The default options for new instances
+	DEFAULT_OPTIONS = {
+		execution_interval: DEFAULT_EXECUTION_INTERVAL,
+		send_timeout: DEFAULT_SEND_TIMEOUT,
+	}
+
+
 
 	### Initialize the HTTP log device to send to the specified +endpoint+ with the
 	### given +options+. Valid options are:
 	###
 	### [:execution_interval]
 	###   How many seconds between sending batches of queued messages.
-	### [:timeout_interval]
-	###   How many seconds to wait for the 
-	def initialize( endpoint, opts={} )
-		@execution_interval = opts[:execution_interval] || 60
-		@timeout_interval = opts[:timeout_interval] || 5
+	### [:send_timeout]
+	###   How many seconds to wait for a batch to complete sending
+	def initialize( endpoint=DEFAULT_ENDPOINT, opts={} )
+		opts = DEFAULT_OPTIONS.merge( opts )
+
+		@execution_interval = opts[:execution_interval] || DEFAULT_EXECUTION_INTERVAL
+		@send_timeout = opts[:send_timeout] || DEFAULT_SEND_TIMEOUT
 
 		self.http = endpoint
 		self.start_executor
@@ -39,14 +67,14 @@ class Loggability::LogDevice::Http < Loggability::LogDevice
 	## The single thread pool executor
 	attr_reader :executor
 
-	## The http client for making http requests to datadog
+	## The http client for making http requests to the server
 	attr_reader :http
 
 	### Number of seconds after the task completes before the task is performed again.
 	attr_reader :execution_interval
 
 	### Number of seconds the task can run before it is considered to have failed.
-	attr_reader :timeout_interval
+	attr_reader :send_timeout
 
 	### The timer task thread
 	attr_reader :timer_task
@@ -111,7 +139,7 @@ class Loggability::LogDevice::Http < Loggability::LogDevice
 	def start_timertask
 		@timer_task = Concurrent::TimerTask.new(
 			execution_interval: self.execution_interval,
-			timeout_interval: self.timeout_interval,
+			send_timeout: self.send_timeout,
 			run_now: true
 		) do
 			self.send_logs

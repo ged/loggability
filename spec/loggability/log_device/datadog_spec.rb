@@ -28,5 +28,8 @@ describe Loggability::LogDevice::Datadog do
 		expect( logger.target.content_type ).to eq( 'application/json' )
 	end
 
+
+	
+
 end
 
