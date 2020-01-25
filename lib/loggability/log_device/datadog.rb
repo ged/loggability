@@ -38,7 +38,6 @@ class Loggability::LogDevice::Datadog < Loggability::LogDevice::Http
 	def initialize( api_key )
 		super( ENDPOINT )
 		self.target = api_key
-		@logs_queue = Queue.new
 		@batched_messages_bytesize = 0
 	end
 
@@ -96,26 +95,8 @@ class Loggability::LogDevice::Datadog < Loggability::LogDevice::Http
 	##########
 
 
-	###
-	### sends all a batch of up to  the batched log messages asynchronously to datadog
-	def send_logs
-		return if self.logs_queue.empty?
-
-		batched_messages = Array.new
-		batched_messages.push( self.logs_queue.pop ) until self.logs_queue.empty? || batched_messages.size >= MAX_BATCH_SIZE
-
-		### Do the actual sending asynchronously on a separate thread
-		self.executor.post do
-			self.target.body = batched_messages.to_json
-			self.http.request( self.target )
-		end
-	end
-
-
 	### Sets up the HTTP request object that can send log message to Datadog
 	def target=( api_key )
-		@target = Net::HTTP::Post.new( "#{PATH}%s" % [api_key] )
-		@target.add_field('Content-Type', 'application/json')
 	end
 
 end # class Loggability::LogDevice::Datadog

@@ -51,12 +51,15 @@ class Loggability::LogDevice::Http < Loggability::LogDevice
 	def initialize( endpoint=DEFAULT_ENDPOINT, opts={} )
 		opts = DEFAULT_OPTIONS.merge( opts )
 
-		@execution_interval = opts[:execution_interval] || DEFAULT_EXECUTION_INTERVAL
-		@send_timeout = opts[:send_timeout] || DEFAULT_SEND_TIMEOUT
+		@endpoint           = endpoint.freeze
+		@logs_queue         = Queue.new
 
-		self.http = endpoint
-		self.start_executor
-		self.start_timertask
+		@execution_interval = opts[:execution_interval] || DEFAULT_EXECUTION_INTERVAL
+		@send_timeout       = opts[:send_timeout] || DEFAULT_SEND_TIMEOUT
+		@executor           = nil
+		@timer_task         = nil
+
+		@http_client        = nil
 	end
 
 
@@ -64,70 +67,128 @@ class Loggability::LogDevice::Http < Loggability::LogDevice
 	public
 	######
 
-	## The single thread pool executor
+	##
+	# The single thread pool executor
 	attr_reader :executor
 
-	## The http client for making http requests to the server
-	attr_reader :http
+	##
+	# The URL of the endpoint to send messages to
+	attr_writer :endpoint
 
-	### Number of seconds after the task completes before the task is performed again.
+	##
+	# The Queue that contains any log messages which have not yet been sent to the
+	# logging service.
+	attr_reader :logs_queue
+
+	##
+	# Number of seconds after the task completes before the task is performed again.
 	attr_reader :execution_interval
 
-	### Number of seconds the task can run before it is considered to have failed.
+	##
+	# Number of seconds the task can run before it is considered to have failed.
 	attr_reader :send_timeout
 
-	### The timer task thread
+	##
+	# The timer task thread
 	attr_reader :timer_task
 
 
-	### Closes the http connection
-	def close
-		begin
-			self.http.finish
-		rescue IOError
-			## ignore it since http session has not yet started.
+	### Sends a batch of log messages asynchronously to the logging service.
+	def send_logs
+		return if self.logs_queue.empty? || !self.running?
+
+		# Do the actual sending asynchronously on a separate thread
+		self.executor.post do
+			request = self.make_batch_request
+			request.body = self.get_next_log_payload
+
+			self.http.request( request ) do |res|
+				p( res ) if $DEBUG
+			end
 		end
 	end
 
 
-	##########
-	protected
-	##########
+	### Returns a new HTTP request (a subclass of Net::HTTPRequest) suitable for
+	### sending the next batch of logs to the service. Defaults to a POST of JSON data.
+	def make_batch_request
+		request = Net::HTTP::Post.new( self.endpoint.path )
+		request[ 'Content-Type' ] = 'application/json'
+
+		return request
+	end
 
 
-	###
-	### sends log messages asynchronously to logging service' http endpoint
-	def send_logs
-		raise "Subclass must implement this method"
+	### Dequeue pending log messages to send to the service and return them as a
+	### suitably-encoded String. The default is a JSON Array. This executes inside
+	### the sending thread.
+	def get_next_log_payload
+		buf = String.new( encoding: 'utf-8' )
+		count = 0
+		bytes = 0
+
+		# Be conservative so as not to overflow
+		max_size = MAX_BATCH_BYTESIZE - MAX_MESSAGE_BYTESIZE - 2 # for the outer Array
+
+		while count < MAX_BATCH_SIZE && bytes < max_size && !self.logs_queue.empty?
+			formatted_message = self.format_log_message( self.logs_queue.pop )
+
+			count += 1
+			bytes += formatted_message.bytesize
+
+			buf << formatted_message
+		end
+
+		return buf
+	end
+
+
+	### Returns the given +message+ in whatever format individual log messages are
+	### expected to be in by the service. The default just returns the stringified
+	### +message+. This executes inside the sending thread.
+	def format_log_message( message )
+		return message.to_s[ 0 ... MAX_MESSAGE_BYTESIZE ]
 	end
 
 
 	### sets up a configured http object ready to instantiate connections
-	def http=( endpoint )
-		uri = URI.parse( endpoint )
-		@http = Net::HTTP.new( uri.host, uri.port )
-		@http.use_ssl = true
-		@http.verify_mode = OpenSSL::SSL::VERIFY_PEER
+	def http
+		return @http ||= begin
+			uri = URI.parse( self.endpoint )
+
+			http = Net::HTTP.new( uri.host, uri.port )
+
+			if uri.scheme == 'https'
+				http.use_ssl = true
+				http.verify_mode = OpenSSL::SSL::VERIFY_PEER
+			end
+
+			http
+		end
 	end
 
 
 	### Starts a thread pool with a single thread.
-	def start_executor
-		### +fallback_policy+ is the policy for handling new tasks that are received
-		### when the queue size has reached `max_queue` or the executor has shut down
-		@executor = Concurrent::SingleThreadExecutor.new( fallback_policy: :abort )
+	def start
+		self.start_executor
+		self.start_timer_task
+	end
 
-		# auto-terminate the executor when the application exits.
-		@executor.auto_terminate = true
+
+	### Returns +true+ if the device has started sending messages to the logging endpoint.
+	def running?
+		return self.executor&.running?
 	end
 
 
 	### Shutdown the executor, which is a pool of single thread
 	### waits 3 seconds for shutdown to complete
 	def stop
-		return if !self.executor || self.executor.shuttingdown? || self.executor.shutdown?
+		return unless self.running?
 
+		self.timer_task.shutdown if self.timer_task&.running?
 		self.executor.shutdown
+
 		unless self.executor.wait_for_termination( 3 )
 			self.executor.halt
 			self.executor.wait_for_termination( 3 )
@@ -135,29 +196,26 @@ class Loggability::LogDevice::Http < Loggability::LogDevice
 	end
 
 
-	### Create a timer task that calls that sends logs at regular interval
-	def start_timertask
-		@timer_task = Concurrent::TimerTask.new(
-			execution_interval: self.execution_interval,
-			send_timeout: self.send_timeout,
-			run_now: true
-		) do
-			self.send_logs
-		end
-
-		@timer_task.execute
+	### Closes the http connection
+	def close
+		self.http.finish
+	rescue IOError
+		# ignore it since http session has not yet started.
 	end
 
 
-	### Shut down the executor, gracefully the first time it's called, then
-	### just kill it if it is called again.
-	def shutdown
-		self.timer_task.shutdown if self.timer_task.running?
-		if self.timer_task.shuttingdown?
-			self.timer_task.kill
-		else
-			self.timer_task.shutdown || self.timer_task.kill
-		end
+	### Start the background thread that sends messages.
+	def start_executor
+		@executor = Concurrent::SingleThreadExecutor.new
+		@executor.auto_terminate = true
+	end
+
+
+	### Create a timer task that calls that sends logs at regular interval
+	def start_timer_task
+		@timer_task = Concurrent::TimerTask.execute(
+			execution_interval: self.execution_interval,
+			&self.method(:send_logs) )
 	end
 
 

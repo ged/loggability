@@ -48,4 +48,4 @@ class Loggability::LogDevice
 		end
 	end
 
-end
+end # class Loggability::LogDevice
