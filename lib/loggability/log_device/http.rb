@@ -3,6 +3,7 @@
 # encoding: utf-8
 
 require 'socket'
+require 'uri'
 require 'net/https'
 require 'json'
 require 'concurrent'
@@ -17,26 +18,28 @@ class Loggability::LogDevice::Http < Loggability::LogDevice
 	# The default HTTP endpoint URL to send logs to
 	DEFAULT_ENDPOINT = "http://localhost:12775/v1/logs"
 
-	# The max number of messages that can be sent to the server in a single payload
-	MAX_BATCH_SIZE = 100
+	# The default maximum number of messages that can be sent to the server in a single payload
+	DEFAULT_MAX_BATCH_SIZE = 100
 
-	# The max size in bytes for a single message.
-	MAX_MESSAGE_BYTESIZE = 2 * 16
-
-	# The max size in bytes of all messages in the batch.
-	MAX_BATCH_BYTESIZE = MAX_MESSAGE_BYTESIZE * MAX_BATCH_SIZE
+	# The default max size in bytes for a single message.
+	DEFAULT_MAX_MESSAGE_BYTESIZE = 2 * 16
 
 	# The default number of seconds between batches
-	DEFAULT_EXECUTION_INTERVAL = 60
+	DEFAULT_BATCH_INTERVAL = 60
 
-	# The default number of seconds to wait for the send to complete before timing
-	# out.
-	DEFAULT_SEND_TIMEOUT = 5
+	# The default number of seconds to wait for data to be written before timing out
+	DEFAULT_WRITE_TIMEOUT = 15
+
+	# The default Executor class to use for asynchronous tasks
+	DEFAULT_EXECUTOR_CLASS = Concurrent::SingleThreadExecutor
 
 	# The default options for new instances
 	DEFAULT_OPTIONS = {
-		execution_interval: DEFAULT_EXECUTION_INTERVAL,
-		send_timeout: DEFAULT_SEND_TIMEOUT,
+		execution_interval: DEFAULT_BATCH_INTERVAL,
+		write_timeout: DEFAULT_WRITE_TIMEOUT,
+		max_batch_size: DEFAULT_MAX_BATCH_SIZE,
+		max_message_bytesize: DEFAULT_MAX_MESSAGE_BYTESIZE,
+		executor_class: DEFAULT_EXECUTOR_CLASS,
 	}
 
 
@@ -44,22 +47,39 @@ class Loggability::LogDevice::Http < Loggability::LogDevice
 	### Initialize the HTTP log device to send to the specified +endpoint+ with the
 	### given +options+. Valid options are:
 	###
-	### [:execution_interval]
-	###   How many seconds between sending batches of queued messages.
-	### [:send_timeout]
-	###   How many seconds to wait for a batch to complete sending
+	### [:batch_interval]
+	###   Maximum number of seconds between batches
+	### [:write_timeout]
+	###   How many seconds to wait for data to be written while sending a batch
+	### [:max_batch_size]
+	###   The maximum number of messages that can be in a single batch
+	### [:max_message_bytesize]
+	###   The maximum number of bytes that can be in a single message
+	### [:executor_class]
+	###   The Concurrent executor class to use for asynchronous tasks.
 	def initialize( endpoint=DEFAULT_ENDPOINT, opts={} )
+		if endpoint.is_a?( Hash )
+			opts = endpoint
+			endpoint = DEFAULT_ENDPOINT
+		end
+
 		opts = DEFAULT_OPTIONS.merge( opts )
 
-		@endpoint           = endpoint.freeze
-		@logs_queue         = Queue.new
+		@endpoint             = URI( endpoint ).freeze
+		@logs_queue           = Queue.new
 
-		@execution_interval = opts[:execution_interval] || DEFAULT_EXECUTION_INTERVAL
-		@send_timeout       = opts[:send_timeout] || DEFAULT_SEND_TIMEOUT
-		@executor           = nil
-		@timer_task         = nil
+		@batch_interval       = opts[:batch_interval] || DEFAULT_BATCH_INTERVAL
+		@write_timeout        = opts[:write_timeout] || DEFAULT_WRITE_TIMEOUT
+		@max_batch_size       = opts[:max_batch_size] || DEFAULT_MAX_BATCH_SIZE
+		@max_message_bytesize = opts[:max_message_bytesize] || DEFAULT_MAX_MESSAGE_BYTESIZE
+		@executor_class       = opts[:executor_class] || DEFAULT_EXECUTOR_CLASS
 
-		@http_client        = nil
+		@max_batch_bytesize   = @max_batch_size * @max_message_bytesize
+		@last_send_time       = Concurrent.monotonic_time
+
+		@executor             = nil
+		@timer_task           = nil
+		@http_client          = nil
 	end
 
 
@@ -72,8 +92,8 @@ class Loggability::LogDevice::Http < Loggability::LogDevice
 	attr_reader :executor
 
 	##
-	# The URL of the endpoint to send messages to
-	attr_writer :endpoint
+	# The URI of the endpoint to send messages to
+	attr_reader :endpoint
 
 	##
 	# The Queue that contains any log messages which have not yet been sent to the
@@ -81,90 +101,52 @@ class Loggability::LogDevice::Http < Loggability::LogDevice
 	attr_reader :logs_queue
 
 	##
-	# Number of seconds after the task completes before the task is performed again.
-	attr_reader :execution_interval
+	# The monotonic clock time when the last batch of logs were sent
+	attr_accessor :last_send_time
 
 	##
-	# Number of seconds the task can run before it is considered to have failed.
-	attr_reader :send_timeout
+	# Number of seconds after the task completes before the task is performed again.
+	attr_reader :batch_interval
+
+	##
+	# How many seconds to wait for data to be written while sending a batch
+	attr_reader :write_timeout
+
+	##
+	# The maximum number of messages to post at one time
+	attr_reader :max_batch_size
+
+	##
+	# The maximum number of bytes of a single message to include in a batch
+	attr_reader :max_message_bytesize
+
+	##
+	# The maximum number of bytes that will be included in a single POST
+	attr_reader :max_batch_bytesize
+
+	##
+	# The Concurrent executor class to use for asynchronous tasks
+	attr_reader :executor_class
 
 	##
 	# The timer task thread
 	attr_reader :timer_task
 
 
-	### Sends a batch of log messages asynchronously to the logging service.
-	def send_logs
-		return if self.logs_queue.empty? || !self.running?
-
-		# Do the actual sending asynchronously on a separate thread
-		self.executor.post do
-			request = self.make_batch_request
-			request.body = self.get_next_log_payload
-
-			self.http.request( request ) do |res|
-				p( res ) if $DEBUG
-			end
-		end
+	### LogDevice API -- write a message to the HTTP device.
+	def write( message )
+		self.start unless self.running?
+		self.logs_queue.enq( message )
+		self.send_logs
 	end
 
 
-	### Returns a new HTTP request (a subclass of Net::HTTPRequest) suitable for
-	### sending the next batch of logs to the service. Defaults to a POST of JSON data.
-	def make_batch_request
-		request = Net::HTTP::Post.new( self.endpoint.path )
-		request[ 'Content-Type' ] = 'application/json'
-
-		return request
-	end
-
-
-	### Dequeue pending log messages to send to the service and return them as a
-	### suitably-encoded String. The default is a JSON Array. This executes inside
-	### the sending thread.
-	def get_next_log_payload
-		buf = String.new( encoding: 'utf-8' )
-		count = 0
-		bytes = 0
-
-		# Be conservative so as not to overflow
-		max_size = MAX_BATCH_BYTESIZE - MAX_MESSAGE_BYTESIZE - 2 # for the outer Array
-
-		while count < MAX_BATCH_SIZE && bytes < max_size && !self.logs_queue.empty?
-			formatted_message = self.format_log_message( self.logs_queue.pop )
-
-			count += 1
-			bytes += formatted_message.bytesize
-
-			buf << formatted_message
-		end
-
-		return buf
-	end
-
-
-	### Returns the given +message+ in whatever format individual log messages are
-	### expected to be in by the service. The default just returns the stringified
-	### +message+. This executes inside the sending thread.
-	def format_log_message( message )
-		return message.to_s[ 0 ... MAX_MESSAGE_BYTESIZE ]
-	end
-
-
-	### sets up a configured http object ready to instantiate connections
-	def http
-		return @http ||= begin
-			uri = URI.parse( self.endpoint )
-
-			http = Net::HTTP.new( uri.host, uri.port )
-
-			if uri.scheme == 'https'
-				http.use_ssl = true
-				http.verify_mode = OpenSSL::SSL::VERIFY_PEER
-			end
-
-			http
-		end
+	### LogDevice API -- stop the batch thread and close the http connection
+	def close
+		self.stop
+		self.http_client.finish
+	rescue IOError
+		# ignore it since http session has not yet started.
 	end
 
 
@@ -196,26 +178,112 @@ class Loggability::LogDevice::Http < Loggability::LogDevice
 	end
 
 
-	### Closes the http connection
-	def close
-		self.http.finish
-	rescue IOError
-		# ignore it since http session has not yet started.
-	end
-
-
 	### Start the background thread that sends messages.
 	def start_executor
-		@executor = Concurrent::SingleThreadExecutor.new
-		@executor.auto_terminate = true
+		@executor = self.executor_class.new
+		@executor.auto_terminate = true unless @executor.serialized?
 	end
 
 
 	### Create a timer task that calls that sends logs at regular interval
 	def start_timer_task
-		@timer_task = Concurrent::TimerTask.execute(
-			execution_interval: self.execution_interval,
-			&self.method(:send_logs) )
+		@timer_task = Concurrent::TimerTask.execute( execution_interval: self.batch_interval ) do
+			self.send_logs
+		end
+	end
+
+
+	### Sends a batch of log messages to the logging service. This executes inside
+	### the sending thread.
+	def send_logs
+		self.executor.post do
+			if self.batch_ready?
+				# p "Batch ready; sending."
+				request = self.make_batch_request
+				request.body = self.get_next_log_payload
+
+				# p "Sending request", request
+
+				self.http_client.request( request ) do |res|
+					p( res ) if $DEBUG
+				end
+
+				self.last_send_time = Concurrent.monotonic_time
+			else
+				# p "Batch not ready yet."
+			end
+		end
+	end
+
+
+	### Returns +true+ if a batch of logs is ready to be sent.
+	def batch_ready?
+		seconds_since_last_send = Concurrent.monotonic_time - self.last_send_time
+
+		return self.logs_queue.size >= self.max_batch_size ||
+			seconds_since_last_send >= self.batch_interval
+	end
+	alias_method :has_batch_ready?, :batch_ready?
+
+
+	### Returns a new HTTP request (a subclass of Net::HTTPRequest) suitable for
+	### sending the next batch of logs to the service. Defaults to a POST of JSON data. This
+	### executes inside the sending thread.
+	def make_batch_request
+		request = Net::HTTP::Post.new( self.endpoint.path )
+		request[ 'Content-Type' ] = 'application/json'
+
+		return request
+	end
+
+
+	### Dequeue pending log messages to send to the service and return them as a
+	### suitably-encoded String. The default is a JSON Array. This executes inside
+	### the sending thread.
+	def get_next_log_payload
+		buf = []
+		count = 0
+		bytes = 0
+
+		# Be conservative so as not to overflow
+		max_size = self.max_batch_bytesize - self.max_message_bytesize - 2 # for the outer Array
+
+		while count < self.max_batch_size && bytes < max_size && !self.logs_queue.empty?
+			formatted_message = self.format_log_message( self.logs_queue.deq )
+
+			count += 1
+			bytes += formatted_message.bytesize + 3 # comma and delimiters
+
+			buf << formatted_message
+		end
+
+		return JSON.generate( buf )
+	end
+
+
+	### Returns the given +message+ in whatever format individual log messages are
+	### expected to be in by the service. The default just returns the stringified
+	### +message+. This executes inside the sending thread.
+	def format_log_message( message )
+		return message.to_s[ 0 ... self.max_message_bytesize ]
+	end
+
+
+	### sets up a configured http object ready to instantiate connections
+	def http_client
+		return @http_client ||= begin
+			uri = URI.parse( self.endpoint )
+
+			http = Net::HTTP.new( uri.host, uri.port )
+			http.write_timeout = self.write_timeout
+
+			if uri.scheme == 'https'
+				http.use_ssl = true
+				http.verify_mode = OpenSSL::SSL::VERIFY_PEER
+			end
+
+			http
+		end
 	end
 
 

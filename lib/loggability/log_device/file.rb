@@ -28,6 +28,7 @@ class Loggability::LogDevice::File < Loggability::LogDevice
 		self.target.write( message )
 	end
 
+
 	### close the file
 	def close
 		self.target.close

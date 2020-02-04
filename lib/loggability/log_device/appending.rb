@@ -27,6 +27,7 @@ class Loggability::LogDevice::Appending < Loggability::LogDevice
 		@target << message
 	end
 
+
 	### No-op -- this is here just so Logger doesn't complain
 	def close; end
 

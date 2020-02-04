@@ -106,6 +106,7 @@ describe Loggability::Logger do
 			expect( logger.level ).to eq( :warn )
 		end
 
+
 		it "defaults to :debug level when $DEBUG is true" do
 			begin
 				$DEBUG = true
@@ -115,6 +116,7 @@ describe Loggability::Logger do
 			end
 		end
 
+
 		it "allows its levels to be set with integers like Logger" do
 			newlevel = Logger::DEBUG
 			$stderr.puts "Setting newlevel to %p" % [ newlevel ]
@@ -122,10 +124,12 @@ describe Loggability::Logger do
 			expect( logger.level ).to eq( :debug )
 		end
 
+
 		it "allows its levels to be set with Symbolic level names" do
 			logger.level = :info
 			expect( logger.level ).to eq( :info )
 		end
+
 
 		it "allows its levels to be set with Stringish level names" do
 			logger.level = 'fatal'
@@ -141,11 +145,13 @@ describe Loggability::Logger do
 			expect( logger.logdev.dev ).to be( $stderr )
 		end
 
+
 		it "can be told to log to a file" do
 			tmpfile = Tempfile.new( 'loggability-device-spec' )
 			logger.output_to( tmpfile.path )
 			expect( logger.logdev.dev ).to be_a( File )
 		end
+
 
 		it "supports log-rotation arguments for logfiles" do
 			tmpfile = Tempfile.new( 'loggability-device-spec' )
@@ -155,6 +161,7 @@ describe Loggability::Logger do
 			expect( logger.logdev.instance_variable_get(:@shift_age) ).to eq( 5 )
 			expect( logger.logdev.instance_variable_get(:@shift_size) ).to eq( 125000 )
 		end
+
 
 		it "can be told to log to a file and delegate to ruby's built-in logger log device" do
 			logfile = double( "logfile.log" )
@@ -172,34 +179,14 @@ describe Loggability::Logger do
 			expect( logger.logdev ).to be_a( Logger::LogDevice )
 		end
 
-		it "can be told to log to datadog but won't send messages until it has batched enough log entries" do
-			datadog_logdev = Loggability::LogDevice.create( :datadog, 'datadog_api_key' )
-			logger.output_to( datadog_logdev )
 
-			expect( logger.logdev ).to be_a( Loggability::LogDevice::Datadog )
-			expect( datadog_logdev.http ).not_to receive( :request ).
-				with( datadog_logdev.target )
+		it "can be told to log to a custom log device type" do
+			logger.output_to( :http, 'https://logapi.example.com:41133/v1/logintake' )
 
-			(Loggability::LogDevice::Datadog::MAX_BATCH_SIZE - 1).times do
-				logger.warn( 'just a warning this time.' )
-			end
-		end
+			device = logger.logdev
 
-
-		it "can be told to log to datadog and send messages" do
-			datadog_logdev = Loggability::LogDevice.create( :datadog, 'datadog_api_key' )
-			logger.output_to( datadog_logdev )
-
-			expect( logger.logdev ).to be_a( Loggability::LogDevice::Datadog )
-			expect( datadog_logdev.http ).to receive( :request ).
-				with( datadog_logdev.target ).
-				and_return( Net::HTTPOK )
-
-			Loggability::LogDevice::Datadog::MAX_BATCH_SIZE.times do
-				logger.warn( 'just a warning this time.' )
-			end
-			## A little nap to make sure async call to datadog happened
-			sleep( 0.1 )
+			expect( device ).to be_a( Loggability::LogDevice::Http )
+			expect( device.endpoint.to_s ).to eq( 'https://logapi.example.com:41133/v1/logintake' )
 		end
 
 
@@ -213,6 +200,7 @@ describe Loggability::Logger do
 			expect( logmessages.first ).to match( /something happened/i )
 		end
 
+
 		it "doesn't re-wrap a Logger::LogDevice" do
 			tmpfile = Tempfile.new( 'loggability-device-spec' )
 			logger.output_to( tmpfile.path, 5, 125000 )
@@ -222,6 +210,7 @@ describe Loggability::Logger do
 
 			expect( logger.logdev ).to be( original_logdev )
 		end
+
 
 		it "doesn't re-wrap an Appending log device" do
 			log_array = []
@@ -240,10 +229,12 @@ describe Loggability::Logger do
 			expect( logger.formatter ).to be_a( Loggability::Formatter::Default )
 		end
 
+
 		it "can be told to use the default formatter explicitly" do
 			logger.format_as( :default )
 			expect( logger.formatter ).to be_a( Loggability::Formatter::Default )
 		end
+
 
 		it "can be told to use a block as a formatter" do
 			logger.format_with do |severity, datetime, progname, msg|
@@ -253,10 +244,12 @@ describe Loggability::Logger do
 			expect( logger.formatter ).to be_a( Proc )
 		end
 
+
 		it "can be told to use the HTML formatter" do
 			logger.format_as( :html )
 			expect( logger.formatter ).to be_a( Loggability::Formatter::HTML )
 		end
+
 
 		it "supports formatting with ::Logger::Formatter, too" do
 			output = []
@@ -290,6 +283,7 @@ describe Loggability::Logger do
 			expected_format = /DEBUG \{Object:0x[[:xdigit:]]+\} -- A debug message.\n/i
 			expect( messages.first ).to match( expected_format )
 		end
+
 
 		it "has a terse inspection format" do
 			object = Object.new

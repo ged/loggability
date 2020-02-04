@@ -282,6 +282,8 @@ class Loggability::Logger < ::Logger
 			self.logdev = MultiDevice.new( target )
 		elsif target.respond_to?( :<< )
 			self.logdev = Loggability::LogDevice.create( :appending, target )
+		elsif target.is_a?( Symbol )
+			self.logdev = Loggability::LogDevice.create( target, *args )
 		else
 			raise ArgumentError, "don't know how to output to %p (a %p)" % [ target, target.class ]
 		end
@@ -312,10 +314,11 @@ class Loggability::Logger < ::Logger
 	end
 
 
-	### Set a new +formatter+ for the logger. If +formatter+ is +nil+ or +:default+, this causes the
-	### logger to fall back to its default formatter. If it's a Symbol other than +:default+, it looks
-	### for a similarly-named formatter under loggability/formatter/ and uses that. If +formatter+ is
-	### an object that responds to #call (e.g., a Proc or a Method object), that object is used directly.
+	### Set a new +formatter+ for the logger. If +formatter+ is +nil+ or +:default+, this causes
+	### the logger to fall back to its default formatter. If it's a Symbol other than +:default+,
+	### it looks for a similarly-named formatter under loggability/formatter/ and uses that. If
+	### +formatter+ is an object that responds to #call (e.g., a Proc or a Method object), that
+	### object is used directly.
 	###
 	### Procs and methods should have the method signature: (severity, datetime, progname, msg).
 	###
