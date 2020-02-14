@@ -43,7 +43,6 @@ class Loggability::LogDevice::Http < Loggability::LogDevice
 	}
 
 
-
 	### Initialize the HTTP log device to send to the specified +endpoint+ with the
 	### given +options+. Valid options are:
 	###
@@ -53,6 +52,8 @@ class Loggability::LogDevice::Http < Loggability::LogDevice
 	###   How many seconds to wait for data to be written while sending a batch
 	### [:max_batch_size]
 	###   The maximum number of messages that can be in a single batch
+	### [:max_batch_bytesize]
+	###   The maximum number of bytes that can be in the payload of a single batch
 	### [:max_message_bytesize]
 	###   The maximum number of bytes that can be in a single message
 	### [:executor_class]
@@ -74,12 +75,8 @@ class Loggability::LogDevice::Http < Loggability::LogDevice
 		@max_message_bytesize = opts[:max_message_bytesize] || DEFAULT_MAX_MESSAGE_BYTESIZE
 		@executor_class       = opts[:executor_class] || DEFAULT_EXECUTOR_CLASS
 
-		@max_batch_bytesize   = @max_batch_size * @max_message_bytesize
+		@max_batch_bytesize   = opts[:max_batch_bytesize] || @max_batch_size * @max_message_bytesize
 		@last_send_time       = Concurrent.monotonic_time
-
-		@executor             = nil
-		@timer_task           = nil
-		@http_client          = nil
 	end
 
 
@@ -257,7 +254,7 @@ class Loggability::LogDevice::Http < Loggability::LogDevice
 			buf << formatted_message
 		end
 
-		return JSON.generate( buf )
+		return '[' + buf.join(',') + ']'
 	end
 
 
@@ -265,7 +262,7 @@ class Loggability::LogDevice::Http < Loggability::LogDevice
 	### expected to be in by the service. The default just returns the stringified
 	### +message+. This executes inside the sending thread.
 	def format_log_message( message )
-		return message.to_s[ 0 ... self.max_message_bytesize ]
+		return message.to_s[ 0 ... self.max_message_bytesize ].dump
 	end
 
 

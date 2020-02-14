@@ -31,4 +31,4 @@ class Loggability::LogDevice::Appending < Loggability::LogDevice
 	### No-op -- this is here just so Logger doesn't complain
 	def close; end
 
-end # class AppendingLogDevice
+end # class Loggability::LogDevice::Appending

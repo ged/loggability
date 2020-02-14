@@ -4,12 +4,12 @@ packages:
   - rubygem-gems
   - rubygem-rake
 sources:
-  - hg+https://hg.sr.ht/~ged/loggability
+  - hg+https://hg.sr.ht/~ged/Loggability
 tasks:
   - setup: |
-      cd loggability
+      cd Loggability
       gem install --user-install -Ng
   - test: |
       export PATH=$PATH:$(ruby -r rubygems -e 'puts Gem.user_dir')/bin
-      cd loggability
+      cd Loggability
       COVERAGE=1 rspec -cfd

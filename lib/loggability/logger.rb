@@ -24,36 +24,6 @@ class Loggability::Logger < ::Logger
 	DEFAULT_SHIFT_SIZE = 1048576
 
 
-	# A log device that appends to the object it's constructed with instead of writing
-	# to a file descriptor or a file.
-	class AppendingLogDevice
-
-		### Create a new AppendingLogDevice that will append content to +target+ (a
-		### object that responds to #>>).
-		def initialize( target )
-			@target = target
-		end
-
-
-		######
-		public
-		######
-
-		# The target of the log device
-		attr_reader :target
-
-
-		### Append the specified +message+ to the target.
-		def write( message )
-			@target << message
-		end
-
-		### No-op -- this is here just so Logger doesn't complain
-		def close; end
-
-	end # class AppendingLogDevice
-
-
 	# Proxy for the Logger that injects the name of the object it wraps as the 'progname'
 	# of each log message.
 	class ObjectNameProxy

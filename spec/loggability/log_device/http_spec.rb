@@ -96,8 +96,53 @@ describe Loggability::LogDevice::Http do
 	end
 
 
-	it "limits the batch to the configured size constraints"
-	it "limits the batch to the configured bytesize constraints"
+	it "limits messages to the configured byte size constraints" do
+		device = described_class.new(
+			max_batch_size: 3,
+			max_message_bytesize: 1024,
+			batch_interval: 0.1,
+			executor_class: Concurrent::ImmediateExecutor )
+		device.instance_variable_set( :@http_client, http_client )
+
+		expect( http_client ).to receive( :request ) do |request|
+			expect( request ).to be_a( Net::HTTP::Post )
+			expect( request['Content-type'] ).to match( %r|application/json|i )
+
+			data = JSON.parse( request.body )
+
+			expect( data ).to all( have_attributes(bytesize: a_value <= 1024) )
+		end.at_least( :once )
+
+		device.write( "message data" * 10 )  # 120 bytes
+		device.write( "message data" * 100 ) # 1200 bytes
+		device.write( "message data" * 85 )  # 1020 bytes
+		device.write( "message data" * 86 )  # 1032 bytes
+
+		sleep( 0.1 ) until device.logs_queue.empty?
+	end
+
+
+	it "limits the batch to the configured byte size constraints" do
+		device = described_class.new(
+			max_batch_bytesize: 1024,
+			batch_interval: 0.1,
+			executor_class: Concurrent::ImmediateExecutor )
+		device.instance_variable_set( :@http_client, http_client )
+
+		expect( http_client ).to receive( :request ) do |request|
+			expect( request ).to be_a( Net::HTTP::Post )
+			expect( request['Content-type'] ).to match( %r|application/json|i )
+
+			expect( request.body.bytesize ).to be <= 1024
+		end.at_least( :once )
+
+		20.times { device.write( "message data" * 10 )  } # 120 bytes
+		20.times { device.write( "message data" * 100 ) } # 1200 bytes
+		20.times { device.write( "message data" * 85 )  } # 1020 bytes
+		20.times { device.write( "message data" * 86 )  } # 1032 bytes
+
+		sleep( 0.1 ) until device.logs_queue.empty?
+	end
 
 
 end

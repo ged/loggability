@@ -34,4 +34,4 @@ class Loggability::LogDevice::File < Loggability::LogDevice
 		self.target.close
 	end
 
-end # class AppendingLogDevice
+end # class Loggability::LogDevice::File
