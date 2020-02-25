@@ -1,6 +1,15 @@
 = Release History for loggability
 
 ---
+== v0.16.0 [2020-02-24] Michael Granger <ged@faeriemud.org>
+
+Improvements:
+
+- Expose a "log device" API and add the ability to write to multiple devices
+- Add a device for logging to an HTTP service
+
+Thanks to Mahmood Khan <mkhan1484@gmail.com> for the patch.
+
 
 == v0.15.1 [2020-01-09] Michael Granger <ged@faeriemud.org>
 
