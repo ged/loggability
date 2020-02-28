@@ -161,6 +161,12 @@ describe Loggability do
 			expect( Loggability[loghost].logdev.dev ).to be( $stdout )
 		end
 
+		it "can propagate an outputter with arguments to every loghost" do
+			Loggability.output_to( :http, 'http://localhost:12771/v1/logs' )
+			expect( Loggability[loghost].logdev ).to be_a( Loggability::LogDevice )
+			expect( Loggability[loghost].logdev.endpoint ).to eq( URI('http://localhost:12771/v1/logs') )
+		end
+
 		it "can propagate a formatter to every loghost" do
 			Loggability.format_with( :color )
 			expect( Loggability[loghost].formatter ).to be_a( Loggability::Formatter::Color )

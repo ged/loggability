@@ -146,12 +146,12 @@ module Loggability
 
 	### Call the method with the given +methodname+ across the loggers of all loghosts with
 	### the given +arg+ and/or +block+.
-	def self::aggregate( methodname, arg, &block )
+	def self::aggregate( methodname, *args, &block )
 		# self.log.debug "Aggregating a call to %p with %p to %d log hosts" %
 		#	[ methodname, arg, Loggability.log_hosts.length ]
 		Loggability.log_hosts.values.each do |loghost|
 			# self.log.debug "  %p.logger.%s( %p )" % [ loghost, methodname, arg ]
-			loghost.logger.send( methodname, arg, &block )
+			loghost.logger.send( methodname, *args, &block )
 		end
 	end
 
@@ -191,8 +191,8 @@ module Loggability
 	#
 	# Aggregate method: set all loggers to log to +destination+. See Loggability::Logger#output_to
 	# for more info.
-	def self::output_to( newdevice )
-		self.aggregate( :output_to, newdevice )
+	def self::output_to( newdevice, *args )
+		self.aggregate( :output_to, newdevice, *args )
 	end
 	class << self
 		alias_method :write_to, :output_to
