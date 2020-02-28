@@ -269,7 +269,7 @@ class Loggability::LogDevice::Http < Loggability::LogDevice
 	### sets up a configured http object ready to instantiate connections
 	def http_client
 		return @http_client ||= begin
-			uri = URI.parse( self.endpoint )
+			uri = URI( self.endpoint )
 
 			http = Net::HTTP.new( uri.host, uri.port )
 			http.write_timeout = self.write_timeout

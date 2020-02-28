@@ -145,4 +145,25 @@ describe Loggability::LogDevice::Http do
 	end
 
 
+	it "uses an HTTP client for the appropriate host and port" do
+		device = described_class.new(
+			'http://logs.example.com:12881/v1/log_ingester',
+			executor_class: Concurrent::ImmediateExecutor )
+		http = device.http_client
+
+		expect( http.address ).to eq( 'logs.example.com' )
+		expect( http.port ).to eq( 12881 )
+	end
+
+
+	it "verifies the peer cert if sending to an HTTPS endpoint" do
+		device = described_class.new(
+			'https://logs.example.com:12881/v1/log_ingester',
+			executor_class: Concurrent::ImmediateExecutor )
+		http = device.http_client
+
+		expect( http.use_ssl? ).to be_truthy
+		expect( http.verify_mode ).to eq( OpenSSL::SSL::VERIFY_PEER )
+	end
+
 end
