@@ -1,6 +1,19 @@
 = Release History for loggability
 
 ---
+
+== v0.17.0 [2020-02-27] Michael Granger <ged@faeriemud.org>
+
+Bugfixes:
+
+- Fix the construction of the client in the http log device
+
+Improvements:
+
+- Add support for log devices to the aggregate #output_to
+
+
+
 == v0.16.0 [2020-02-24] Michael Granger <ged@faeriemud.org>
 
 Improvements:
