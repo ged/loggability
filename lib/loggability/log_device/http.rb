@@ -33,6 +33,9 @@ class Loggability::LogDevice::Http < Loggability::LogDevice
 	# The default Executor class to use for asynchronous tasks
 	DEFAULT_EXECUTOR_CLASS = Concurrent::SingleThreadExecutor
 
+	# The default for the maximum bytesize of the queue
+	DEFAULT_MaX_QUEUE_BYTESIZE = 1_073_741_824
+
 	# The default options for new instances
 	DEFAULT_OPTIONS = {
 		execution_interval: DEFAULT_BATCH_INTERVAL,
@@ -69,6 +72,8 @@ class Loggability::LogDevice::Http < Loggability::LogDevice
 		@endpoint             = URI( endpoint ).freeze
 		@logs_queue           = Queue.new
 
+		@logs_queue_bytesize  = 0
+		@max_queue_bytesize   = opts[:max_queue_bytesize] || DEFAULT_MaX_QUEUE_BYTESIZE
 		@batch_interval       = opts[:batch_interval] || DEFAULT_BATCH_INTERVAL
 		@write_timeout        = opts[:write_timeout] || DEFAULT_WRITE_TIMEOUT
 		@max_batch_size       = opts[:max_batch_size] || DEFAULT_MAX_BATCH_SIZE
@@ -96,6 +101,14 @@ class Loggability::LogDevice::Http < Loggability::LogDevice
 	# The Queue that contains any log messages which have not yet been sent to the
 	# logging service.
 	attr_reader :logs_queue
+
+	##
+	# The max bytesize of the queue. Will not queue more messages if this threshold is hit
+	attr_reader :max_queue_bytesize
+
+	##
+	# The size of +logs_queue+ in bytes
+	attr_accessor :logs_queue_bytesize
 
 	##
 	# The monotonic clock time when the last batch of logs were sent
@@ -133,7 +146,9 @@ class Loggability::LogDevice::Http < Loggability::LogDevice
 	### LogDevice API -- write a message to the HTTP device.
 	def write( message )
 		self.start unless self.running?
+		return if self.logs_queue_bytesize >= self.max_queue_bytesize
 		self.logs_queue.enq( message )
+		self.logs_queue_bytesize += message.bytesize
 		self.send_logs
 	end
 
@@ -246,7 +261,9 @@ class Loggability::LogDevice::Http < Loggability::LogDevice
 		max_size = self.max_batch_bytesize - self.max_message_bytesize - 2 # for the outer Array
 
 		while count < self.max_batch_size && bytes < max_size && !self.logs_queue.empty?
-			formatted_message = self.format_log_message( self.logs_queue.deq )
+			raw_message = self.logs_queue.deq
+			self.logs_queue_bytesize -= raw_message
+			formatted_message = self.format_log_message( raw_message )
 
 			count += 1
 			bytes += formatted_message.bytesize + 3 # comma and delimiters
