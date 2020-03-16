@@ -145,4 +145,52 @@ describe Loggability::LogDevice::Http do
 	end
 
 
+	it "stops queuing more messages if max queue size is reached" do
+		device = described_class.new(
+			max_batch_bytesize: 1024,
+			batch_interval: 100,
+			max_queue_bytesize: 100,
+			executor_class: Concurrent::ImmediateExecutor )
+		device.instance_variable_set( :@http_client, http_client )
+
+		expect( device ).to receive( :send_logs ).at_least( :once )
+
+		msg = "test message"
+		device.write(msg)
+		expect( device.logs_queue_bytesize == msg.bytesize )
+
+		hash_msg = { message: "This is a test log message", tags: ["tag1", "tag2"] }
+		device.write( hash_msg )
+		previous_bytesize = device.logs_queue_bytesize - hash_msg.to_json.bytesize
+		expect( device.logs_queue_bytesize ).to eq( hash_msg.to_json.bytesize + previous_bytesize )
+
+		queue_current_bytesize = device.logs_queue_bytesize
+		hash_msg = { message: "This is a test log message", tags: ["tag1", "tag2"] }
+		device.write( hash_msg )
+		expect( device.logs_queue_bytesize ).to eq( queue_current_bytesize )
+	end
+
+
+	it "reduces the queue bytesize once messages are sent" do
+		device = described_class.new(
+			max_batch_bytesize: 1024,
+			batch_interval: 100,
+			max_queue_bytesize: 100,
+			executor_class: Concurrent::ImmediateExecutor )
+		device.instance_variable_set( :@http_client, http_client )
+
+		expect( device ).to receive( :send_logs ).at_least( :once )
+		msg = "test message"
+		device.write(msg)
+		expect( device.logs_queue_bytesize == msg.bytesize )
+
+		msg = "this is just a test message"
+		device.write( msg )
+		previous_bytesize = device.logs_queue_bytesize - msg.bytesize
+		expect( device.logs_queue_bytesize ).to eq( msg.bytesize + previous_bytesize )
+
+		expect { device.get_next_log_payload }.to change { device.logs_queue_bytesize }.to( 0 )
+	end
+
+
 end
