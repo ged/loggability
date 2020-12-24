@@ -38,9 +38,9 @@ class Loggability::LogDevice
 	### * "data_dog_api_key" is the argument that will be passed onto the datadog
 	###   log device's constructor
 	def self::parse_device_spec( target_spec )
-		targets = target_spec.split( ':' ).compact
+		targets = target_spec.split( ';' ).compact
 		return targets.map do |t|
-			target_subclass = t[ DEVICE_TARGET_REGEX, 1 ]&.strip().to_sym
+			target_subclass = t[ DEVICE_TARGET_REGEX, 1 ]&.strip.to_sym
 			target_subclass_args = t[ DEVICE_TARGET_REGEX, 2 ]
 
 			self.create( target_subclass, target_subclass_args )
