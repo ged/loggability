@@ -2,6 +2,13 @@
 
 ---
 
+== v0.18.2 [2020-12-28] Michael Granger <ged@faeriemud.org>
+
+Improvements:
+
+- Make the version spec even less specific.
+
+
 == v0.18.1 [2020-12-28] Michael Granger <ged@faeriemud.org>
 
 Improvements:
